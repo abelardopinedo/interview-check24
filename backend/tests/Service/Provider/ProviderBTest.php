@@ -3,6 +3,8 @@
 namespace App\Tests\Service\Provider;
 
 use App\DTO\CalculateRequestDTO;
+use App\Entity\Provider;
+use App\Repository\ProviderRepository;
 use App\Service\Provider\ProviderB;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
@@ -27,7 +29,11 @@ class ProviderBTest extends TestCase
         $mockResponse = new MockResponse('<RespuestaCotizacion><Precio>310.0</Precio><Moneda>EUR</Moneda></RespuestaCotizacion>');
         $client = new MockHttpClient($mockResponse);
         
-        $provider = new ProviderB($client, 'http://test.local/provider-b/quote', false, $this->serializer);
+        $repository = $this->createStub(ProviderRepository::class);
+        $providerEntity = (new Provider())->setUrl('http://test.local/provider-b/quote')->setHasDiscount(false);
+        $repository->method('findOneByName')->willReturn($providerEntity);
+
+        $provider = new ProviderB($client, $repository, $this->serializer);
         
         $dto = new CalculateRequestDTO('1990-01-01', 'SUV', 'Comercial');
         $provider->getQuote($dto);
@@ -55,7 +61,11 @@ class ProviderBTest extends TestCase
         $mockResponse = new MockResponse($xmlResponse);
         $client = new MockHttpClient($mockResponse);
         
-        $provider = new ProviderB($client, 'http://test.local', false, $this->serializer);
+        $repository = $this->createStub(ProviderRepository::class);
+        $providerEntity = (new Provider())->setUrl('http://test.local')->setHasDiscount(false);
+        $repository->method('findOneByName')->willReturn($providerEntity);
+
+        $provider = new ProviderB($client, $repository, $this->serializer);
         
         $response = $client->request('POST', 'http://test.local');
         

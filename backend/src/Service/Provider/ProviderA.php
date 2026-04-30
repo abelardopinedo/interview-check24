@@ -18,12 +18,19 @@ class ProviderA implements ProviderInterface
 {
 
 
+    private ?string $url = null;
+    private ?bool $hasDiscount = null;
+
     public function __construct(
-        private HttpClientInterface $client,
-        private string $url,
-        private bool $hasDiscount,
-        private SerializerInterface $serializer
+        private \Symfony\Contracts\HttpClient\HttpClientInterface $client,
+        private \App\Repository\ProviderRepository $repository,
+        private \Symfony\Component\Serializer\SerializerInterface $serializer
     ) {
+        $provider = $this->repository->findOneByName($this->getName());
+        if ($provider) {
+            $this->url = $provider->getUrl();
+            $this->hasDiscount = $provider->isHasDiscount();
+        }
     }
 
     public function getQuote(CalculateRequestDTO $request): mixed

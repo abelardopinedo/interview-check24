@@ -3,6 +3,8 @@
 namespace App\Tests\Service;
 
 use App\DTO\CalculateRequestDTO;
+use App\Entity\Provider;
+use App\Repository\ProviderRepository;
 use App\Service\Provider\ProviderA;
 use App\Service\Provider\ProviderB;
 use App\Service\ProviderSearchService;
@@ -23,12 +25,21 @@ class ProviderSearchServiceTest extends TestCase
         $this->serializer = new Serializer([new ObjectNormalizer()], [new XmlEncoder(), new JsonEncoder()]);
     }
 
+    private function createMockProvider(string $class, $client, string $url, bool $hasDiscount)
+    {
+        $repository = $this->createStub(ProviderRepository::class);
+        $providerEntity = (new Provider())->setUrl($url)->setHasDiscount($hasDiscount);
+        $repository->method('findOneByName')->willReturn($providerEntity);
+
+        return new $class($client, $repository, $this->serializer);
+    }
+
     public function testFindAllSortsAndAppliesDiscounts(): void
     {
         // Provider A: Base 295, has discount -> returns 280.25
         $mockResponseA = new MockResponse(json_encode(['price' => '295 EUR']));
         $clientA = new MockHttpClient($mockResponseA);
-        $providerA = new ProviderA($clientA, 'http://test.local', true, $this->serializer);
+        $providerA = $this->createMockProvider(ProviderA::class, $clientA, 'http://test.local', true);
 
         // Provider B: Base 250, no discount -> returns 250
         $xmlResponseB = <<<XML
@@ -36,7 +47,7 @@ class ProviderSearchServiceTest extends TestCase
         XML;
         $mockResponseB = new MockResponse($xmlResponseB);
         $clientB = new MockHttpClient($mockResponseB);
-        $providerB = new ProviderB($clientB, 'http://test.local', false, $this->serializer);
+        $providerB = $this->createMockProvider(ProviderB::class, $clientB, 'http://test.local', false);
 
         $service = new ProviderSearchService([$providerA, $providerB]);
 
@@ -59,7 +70,7 @@ class ProviderSearchServiceTest extends TestCase
     {
         // Provider A throws exception (e.g. timeout)
         $clientA = new MockHttpClient(new MockResponse('', ['error' => 'Timeout']));
-        $providerA = new ProviderA($clientA, 'http://test.local', false, $this->serializer);
+        $providerA = $this->createMockProvider(ProviderA::class, $clientA, 'http://test.local', false);
 
         // Provider B succeeds (310 EUR)
         $xmlResponseB = <<<XML
@@ -67,7 +78,7 @@ class ProviderSearchServiceTest extends TestCase
         XML;
         $mockResponseB = new MockResponse($xmlResponseB);
         $clientB = new MockHttpClient($mockResponseB);
-        $providerB = new ProviderB($clientB, 'http://test.local', false, $this->serializer);
+        $providerB = $this->createMockProvider(ProviderB::class, $clientB, 'http://test.local', false);
 
         $service = new ProviderSearchService([$providerA, $providerB]);
 
@@ -84,10 +95,10 @@ class ProviderSearchServiceTest extends TestCase
     {
         // Both providers fail
         $clientA = new MockHttpClient(new MockResponse('', ['error' => 'Timeout']));
-        $providerA = new ProviderA($clientA, 'http://test.local', false, $this->serializer);
+        $providerA = $this->createMockProvider(ProviderA::class, $clientA, 'http://test.local', false);
 
         $clientB = new MockHttpClient(new MockResponse('', ['error' => '500 Error']));
-        $providerB = new ProviderB($clientB, 'http://test.local', false, $this->serializer);
+        $providerB = $this->createMockProvider(ProviderB::class, $clientB, 'http://test.local', false);
 
         $service = new ProviderSearchService([$providerA, $providerB]);
 
