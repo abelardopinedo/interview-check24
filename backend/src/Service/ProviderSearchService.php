@@ -17,7 +17,8 @@ class ProviderSearchService
     public function __construct(
         private iterable $providers,
         private EntityManagerInterface $entityManager,
-        private SerializerInterface $serializer
+        private SerializerInterface $serializer,
+        private CurrentRequestLogStore $logStore
     ) {
     }
 
@@ -28,14 +29,7 @@ class ProviderSearchService
      */
     public function findAll(CalculateRequestDTO $requestDto): array
     {
-        $startTime = microtime(true);
-
-        // 1. Log the incoming request
-        $requestLog = new RequestLog();
-        $requestLog->setEndpoint('/calculate');
-        $requestLog->setHttpMethod('POST');
-        $requestLog->setRequestPayload($this->serializer->serialize($requestDto, 'json'));
-        $this->entityManager->persist($requestLog);
+        $requestLog = $this->logStore->getRequestLog();
 
         $providerMap = [];
         $responses = [];
@@ -58,6 +52,7 @@ class ProviderSearchService
             $pLog->setProvider($provider->getProviderEntity());
             $pLog->setUrl($provider->getUrl());
             $pLog->setRequestPayload($providerPayload);
+            $pLog->setStatus('pending');
             $this->entityManager->persist($pLog);
 
             $providerLogs[spl_object_id($response)] = [
@@ -103,12 +98,8 @@ class ProviderSearchService
         // 4. Sort final results from cheapest to most expensive (considering discounts)
         usort($results, fn($a, $b) => ($a['discount_price'] ?? $a['price']) <=> ($b['discount_price'] ?? $b['price']));
 
-        // 5. Finalize overall request log
-        $requestLog->setLatency((int) ((microtime(true) - $startTime) * 1000));
-        $requestLog->setResponsePayload($this->serializer->serialize($results, 'json'));
-        $requestLog->setStatusCode(200);
-
-        $this->entityManager->flush();
+        // 5. Provider logs are already linked and persisted. 
+        // Flush is handled by the RequestLoggerSubscriber at the end of the request.
 
         return $results;
     }

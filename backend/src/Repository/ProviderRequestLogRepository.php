@@ -20,4 +20,18 @@ class ProviderRequestLogRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, ProviderRequestLog::class);
     }
+
+    public function getPerformanceStats(): array
+    {
+        return $this->createQueryBuilder('p')
+            ->select('pr.name as providerName')
+            ->addSelect('AVG(p.latency) as avgLatency')
+            ->addSelect('SUM(CASE WHEN p.status = :failed THEN 1 ELSE 0 END) as errorCount')
+            ->addSelect('COUNT(p.id) as totalCount')
+            ->join('p.provider', 'pr')
+            ->groupBy('pr.name')
+            ->setParameter('failed', 'failed')
+            ->getQuery()
+            ->getResult();
+    }
 }

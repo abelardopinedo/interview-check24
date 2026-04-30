@@ -29,7 +29,7 @@ class RequestLog
     #[ORM\Column(length: 10)]
     private ?string $httpMethod = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?int $statusCode = null;
 
     #[ORM\Column]

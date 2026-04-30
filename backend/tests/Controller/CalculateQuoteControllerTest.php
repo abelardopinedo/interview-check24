@@ -5,7 +5,11 @@ namespace App\Tests\Controller;
 use App\DTO\CalculateRequestDTO;
 use App\Service\ProviderSearchService;
 use App\Service\Provider\ProviderInterface;
+use App\Entity\ProviderRequestLog;
+use App\Service\CurrentRequestLogStore;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class CalculateQuoteControllerTest extends WebTestCase
@@ -88,7 +92,7 @@ class CalculateQuoteControllerTest extends WebTestCase
         $responseMock = $this->createStub(ResponseInterface::class);
         $responseMock->method('getStatusCode')->willReturn(200);
 
-        $providerEnrolled->method('getQuote')->willReturn($responseMock);
+        $providerEnrolled->method('getQuote')->willReturn(['response' => $responseMock, 'payload' => '{"test": "data"}']);
         $providerEnrolled->method('parseResponse')->willReturn([
             'provider' => 'provider_discounted',
             'price' => 100.0,
@@ -103,14 +107,22 @@ class CalculateQuoteControllerTest extends WebTestCase
         $responseMock2 = $this->createStub(ResponseInterface::class);
         $responseMock2->method('getStatusCode')->willReturn(200);
 
-        $providerNotEnrolled->method('getQuote')->willReturn($responseMock2);
+        $providerNotEnrolled->method('getQuote')->willReturn(['response' => $responseMock2, 'payload' => '{"test": "data"}']);
         $providerNotEnrolled->method('parseResponse')->willReturn([
             'provider' => 'provider_regular',
             'price' => 100.0,
             'currency' => 'EUR'
         ]);
 
-        $service = new ProviderSearchService([$providerEnrolled, $providerNotEnrolled]);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->exactly(2))
+            ->method('persist')
+            ->with($this->isInstanceOf(ProviderRequestLog::class));
+
+        $serializer = $this->createStub(SerializerInterface::class);
+        $logStore = $this->createStub(CurrentRequestLogStore::class);
+
+        $service = new ProviderSearchService([$providerEnrolled, $providerNotEnrolled], $entityManager, $serializer, $logStore);
         $dto = new CalculateRequestDTO('1990-01-01', 'Turismo', 'Privado');
 
         $results = $service->findAll($dto);
@@ -136,7 +148,7 @@ class CalculateQuoteControllerTest extends WebTestCase
         $providerA->method('getName')->willReturn('provider_a');
         $responseMockA = $this->createStub(ResponseInterface::class);
         $responseMockA->method('getStatusCode')->willReturn(200);
-        $providerA->method('getQuote')->willReturn($responseMockA);
+        $providerA->method('getQuote')->willReturn(['response' => $responseMockA, 'payload' => '{"test": "data"}']);
         $providerA->method('parseResponse')->willReturn(['provider' => 'provider_a', 'price' => 100.0, 'currency' => 'EUR']);
 
         // Provider B: 102 EUR, has discount (96.9)
@@ -145,10 +157,18 @@ class CalculateQuoteControllerTest extends WebTestCase
         $providerB->method('getName')->willReturn('provider_b');
         $responseMockB = $this->createStub(ResponseInterface::class);
         $responseMockB->method('getStatusCode')->willReturn(200);
-        $providerB->method('getQuote')->willReturn($responseMockB);
+        $providerB->method('getQuote')->willReturn(['response' => $responseMockB, 'payload' => '{"test": "data"}']);
         $providerB->method('parseResponse')->willReturn(['provider' => 'provider_b', 'price' => 102.0, 'currency' => 'EUR']);
 
-        $service = new ProviderSearchService([$providerA, $providerB]);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->exactly(2))
+            ->method('persist')
+            ->with($this->isInstanceOf(ProviderRequestLog::class));
+
+        $serializer = $this->createStub(SerializerInterface::class);
+        $logStore = $this->createStub(CurrentRequestLogStore::class);
+
+        $service = new ProviderSearchService([$providerA, $providerB], $entityManager, $serializer, $logStore);
         $dto = new CalculateRequestDTO('1990-01-01', 'Turismo', 'Privado');
 
         $results = $service->findAll($dto);
@@ -166,7 +186,7 @@ class CalculateQuoteControllerTest extends WebTestCase
         $errorResponse = $this->createStub(ResponseInterface::class);
         $errorResponse->method('getStatusCode')->willReturn(500);
 
-        $failingProvider->method('getQuote')->willReturn($errorResponse);
+        $failingProvider->method('getQuote')->willReturn(['response' => $errorResponse, 'payload' => '{"test": "data"}']);
 
         // Mock a successful Provider
         $successfulProvider = $this->createStub(ProviderInterface::class);
@@ -175,14 +195,22 @@ class CalculateQuoteControllerTest extends WebTestCase
         $successResponse = $this->createStub(ResponseInterface::class);
         $successResponse->method('getStatusCode')->willReturn(200);
 
-        $successfulProvider->method('getQuote')->willReturn($successResponse);
+        $successfulProvider->method('getQuote')->willReturn(['response' => $successResponse, 'payload' => '{"test": "data"}']);
         $successfulProvider->method('parseResponse')->willReturn([
             'provider' => 'successful_provider',
             'price' => 150.0,
             'currency' => 'EUR'
         ]);
 
-        $service = new ProviderSearchService([$failingProvider, $successfulProvider]);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->exactly(2))
+            ->method('persist')
+            ->with($this->isInstanceOf(ProviderRequestLog::class));
+
+        $serializer = $this->createStub(SerializerInterface::class);
+        $logStore = $this->createStub(CurrentRequestLogStore::class);
+
+        $service = new ProviderSearchService([$failingProvider, $successfulProvider], $entityManager, $serializer, $logStore);
         $dto = new CalculateRequestDTO('1990-01-01', 'Turismo', 'Privado');
 
         $results = $service->findAll($dto);

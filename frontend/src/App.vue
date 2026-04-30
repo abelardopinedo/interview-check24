@@ -1,136 +1,52 @@
-<script setup lang="ts">
-import { ref } from 'vue';
-import axios from 'axios';
-import QuoteForm from './components/QuoteForm.vue';
-import QuoteList from './components/QuoteList.vue';
-import type { Quote } from './types/Quote';
-import type { RequestQuote } from './types/RequestQuote';
-
-const quotes = ref<Quote[]>([]);
-const isLoading = ref(false);
-const hasSearched = ref(false);
-const formErrors = ref<string[]>([]);
-
-const calculateQuotes = async (payload: RequestQuote) => {
-  isLoading.value = true;
-  hasSearched.value = true;
-  formErrors.value = [];
-  quotes.value = [];
-
-  try {
-    const response = await axios.post('/api/calculate', payload);
-    console.log(response);
-    quotes.value = response.data;
-  } catch (error: any) {
-    if (error.response && error.response.status === 422) {
-      // Extract Symfony validation errors
-      const violations = error.response.data.violations;
-      if (violations && Array.isArray(violations)) {
-        formErrors.value = violations.map((v: any) => `${v.propertyPath}: ${v.title}`);
-      } else {
-        formErrors.value = ['Ocurrio un error al obtener las cotizaciones.'];
-      }
-    } else {
-      formErrors.value = ['Ocurrio un error al obtener las cotizaciones.'];
-    }
-  } finally {
-    isLoading.value = false;
-  }
-};
-</script>
-
 <template>
-  <main class="app-container">
-    <header class="app-header">
-      <h1>Check24</h1>
-    </header>
-
-    <div v-if="formErrors.length > 0" class="error-alert glass-panel">
-      <h3>Error:</h3>
-      <ul>
-        <li v-for="error in formErrors" :key="error">{{ error }}</li>
-      </ul>
-    </div>
-
-    <QuoteForm @submit="calculateQuotes" @error="(errors) => formErrors = errors" />
-
-    <div v-if="isLoading" class="loading-state">
-      <div class="loading-spinner"></div>
-      <p>Obteniendo resultados de nuestros proveedores...</p>
-    </div>
-
-    <QuoteList v-else :quotes="quotes" :has-searched="hasSearched" />
-  </main>
+  <router-view v-slot="{ Component }">
+    <transition name="fade" mode="out-in">
+      <component :is="Component" />
+    </transition>
+  </router-view>
 </template>
 
-<style scoped>
-.app-container {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+<style>
+:root {
+  --primary-color: #3b82f6;
+  --secondary-color: #10b981;
+  --bg-color: #0f172a;
+  --card-bg: rgba(30, 41, 59, 0.7);
+  --text-color: #f8fafc;
+  --text-muted: #94a3b8;
+  --error-color: #ef4444;
 }
 
-.app-header {
-  text-align: center;
-  margin-bottom: 1rem;
+* {
+  box-sizing: border-box;
 }
 
-.app-header h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  background: linear-gradient(to right, #60a5fa, #a78bfa);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 0.5rem;
-}
-
-.app-header p {
-  font-size: 1.1rem;
-  color: var(--text-muted);
-}
-
-.error-alert {
-  background-color: rgba(239, 68, 68, 0.1);
-  border-left: 4px solid var(--error-color);
-  padding: 1rem 1.5rem;
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.error-alert h3 {
-  color: #fca5a5;
-  margin-top: 0;
-  margin-bottom: 0.5rem;
-}
-
-.error-alert ul {
+body {
   margin: 0;
-  padding-left: 1.5rem;
-  color: #fee2e2;
+  padding: 0;
+  overflow-x: hidden;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 0;
-  gap: 1.5rem;
+.glass-panel {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
 }
 
-.loading-spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid rgba(255, 255, 255, 0.1);
-  border-left-color: var(--primary-color);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+/* Page transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

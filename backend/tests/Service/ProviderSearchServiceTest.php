@@ -4,52 +4,64 @@ namespace App\Tests\Service;
 
 use App\DTO\CalculateRequestDTO;
 use App\Entity\Provider;
-use App\Repository\ProviderRepository;
-use App\Service\Provider\ProviderA;
-use App\Service\Provider\ProviderB;
 use App\Service\ProviderSearchService;
+use App\Service\Provider\ProviderInterface;
+use App\Entity\ProviderRequestLog;
+use App\Service\CurrentRequestLogStore;
+use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpClient\MockHttpClient;
-use Symfony\Component\HttpClient\Response\MockResponse;
-use Symfony\Component\Serializer\Encoder\XmlEncoder;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\Serializer;
-use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
+use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class ProviderSearchServiceTest extends TestCase
 {
-    private Serializer $serializer;
+    private SerializerInterface $serializer;
 
     protected function setUp(): void
     {
-        $this->serializer = new Serializer([new ObjectNormalizer()], [new XmlEncoder(), new JsonEncoder()]);
+        $this->serializer = $this->createStub(SerializerInterface::class);
     }
 
-    private function createMockProvider(string $class, $client, string $url, bool $hasDiscount)
+    private function createMockProvider(string $name, float $price, bool $hasDiscount, int $statusCode = 200)
     {
-        $repository = $this->createStub(ProviderRepository::class);
-        $providerEntity = (new Provider())->setUrl($url)->setHasDiscount($hasDiscount);
-        $repository->method('findOneByName')->willReturn($providerEntity);
+        $provider = $this->createStub(ProviderInterface::class);
+        $provider->method('getName')->willReturn($name);
+        $provider->method('hasCampaignDiscount')->willReturn($hasDiscount);
+        $provider->method('getUrl')->willReturn('http://test.local');
 
-        return new $class($client, $repository, $this->serializer);
+        $response = $this->createStub(ResponseInterface::class);
+        $response->method('getStatusCode')->willReturn($statusCode);
+
+        $provider->method('getQuote')->willReturn(['response' => $response, 'payload' => '{"test": "data"}']);
+        $provider->method('parseResponse')->willReturn([
+            'provider' => $name,
+            'price' => $price,
+            'currency' => 'EUR'
+        ]);
+
+        $provider->method('getProviderEntity')->willReturn(new Provider());
+
+        return $provider;
     }
 
     public function testFindAllSortsAndAppliesDiscounts(): void
     {
-        // Provider A: Base 295, has discount -> returns 280.25
-        $mockResponseA = new MockResponse(json_encode(['price' => '295 EUR']));
-        $clientA = new MockHttpClient($mockResponseA);
-        $providerA = $this->createMockProvider(ProviderA::class, $clientA, 'http://test.local', true);
+        $providerA = $this->createMockProvider('provider_a', 295.0, true);
+        $providerB = $this->createMockProvider('provider_b', 250.0, false);
 
-        // Provider B: Base 250, no discount -> returns 250
-        $xmlResponseB = <<<XML
-        <RespuestaCotizacion><Precio>250.0</Precio><Moneda>EUR</Moneda></RespuestaCotizacion>
-        XML;
-        $mockResponseB = new MockResponse($xmlResponseB);
-        $clientB = new MockHttpClient($mockResponseB);
-        $providerB = $this->createMockProvider(ProviderB::class, $clientB, 'http://test.local', false);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->exactly(2))
+            ->method('persist')
+            ->with($this->isInstanceOf(ProviderRequestLog::class));
 
-        $service = new ProviderSearchService([$providerA, $providerB]);
+        $logStore = $this->createStub(CurrentRequestLogStore::class);
+
+        $service = new ProviderSearchService(
+            [$providerA, $providerB],
+            $entityManager,
+            $this->serializer,
+            $logStore
+        );
 
         $dto = new CalculateRequestDTO('1990-01-01', 'Turismo', 'Privado');
         $results = $service->findAll($dto);
@@ -68,19 +80,22 @@ class ProviderSearchServiceTest extends TestCase
 
     public function testFindAllHandlesPartialFailure(): void
     {
-        // Provider A throws exception (e.g. timeout)
-        $clientA = new MockHttpClient(new MockResponse('', ['error' => 'Timeout']));
-        $providerA = $this->createMockProvider(ProviderA::class, $clientA, 'http://test.local', false);
+        $providerA = $this->createMockProvider('provider_a', 300.0, false, 500);
+        $providerB = $this->createMockProvider('provider_b', 310.0, false, 200);
 
-        // Provider B succeeds (310 EUR)
-        $xmlResponseB = <<<XML
-        <RespuestaCotizacion><Precio>310.0</Precio><Moneda>EUR</Moneda></RespuestaCotizacion>
-        XML;
-        $mockResponseB = new MockResponse($xmlResponseB);
-        $clientB = new MockHttpClient($mockResponseB);
-        $providerB = $this->createMockProvider(ProviderB::class, $clientB, 'http://test.local', false);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->exactly(2))
+            ->method('persist')
+            ->with($this->isInstanceOf(ProviderRequestLog::class));
 
-        $service = new ProviderSearchService([$providerA, $providerB]);
+        $logStore = $this->createStub(CurrentRequestLogStore::class);
+
+        $service = new ProviderSearchService(
+            [$providerA, $providerB],
+            $entityManager,
+            $this->serializer,
+            $logStore
+        );
 
         $dto = new CalculateRequestDTO('1990-01-01', 'Turismo', 'Privado');
         $results = $service->findAll($dto);
@@ -93,14 +108,22 @@ class ProviderSearchServiceTest extends TestCase
 
     public function testFindAllHandlesTotalFailure(): void
     {
-        // Both providers fail
-        $clientA = new MockHttpClient(new MockResponse('', ['error' => 'Timeout']));
-        $providerA = $this->createMockProvider(ProviderA::class, $clientA, 'http://test.local', false);
+        $providerA = $this->createMockProvider('provider_a', 0, false, 500);
+        $providerB = $this->createMockProvider('provider_b', 0, false, 500);
 
-        $clientB = new MockHttpClient(new MockResponse('', ['error' => '500 Error']));
-        $providerB = $this->createMockProvider(ProviderB::class, $clientB, 'http://test.local', false);
+        $entityManager = $this->createMock(EntityManagerInterface::class);
+        $entityManager->expects($this->exactly(2))
+            ->method('persist')
+            ->with($this->isInstanceOf(ProviderRequestLog::class));
 
-        $service = new ProviderSearchService([$providerA, $providerB]);
+        $logStore = $this->createStub(CurrentRequestLogStore::class);
+
+        $service = new ProviderSearchService(
+            [$providerA, $providerB],
+            $entityManager,
+            $this->serializer,
+            $logStore
+        );
 
         $dto = new CalculateRequestDTO('1990-01-01', 'Turismo', 'Privado');
         $results = $service->findAll($dto);

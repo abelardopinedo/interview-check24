@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ProviderRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
 #[ORM\Entity(repositoryClass: ProviderRepository::class)]
 class Provider
@@ -20,6 +21,7 @@ class Provider
     private ?string $url = null;
 
     #[ORM\Column]
+    #[SerializedName("has_discount")]
     private ?bool $hasDiscount = null;
 
     public function getId(): ?int
@@ -51,6 +53,7 @@ class Provider
         return $this;
     }
 
+    #[SerializedName("has_discount")]
     public function isHasDiscount(): ?bool
     {
         return $this->hasDiscount;
