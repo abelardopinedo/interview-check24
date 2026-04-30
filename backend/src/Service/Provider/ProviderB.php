@@ -12,6 +12,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 
 use App\Repository\ProviderRepository;
 
+use App\Entity\Provider;
+
 /**
  * HTTP Client Adapter for Provider B.
  * Communicates with the XML-based pricing endpoint and maps responses to DTOs.
@@ -22,6 +24,7 @@ class ProviderB implements ProviderInterface
 
     private ?string $url = null;
     private ?bool $hasDiscount = null;
+    private ?Provider $providerEntity = null;
 
     public function __construct(
         private HttpClientInterface $client,
@@ -32,10 +35,11 @@ class ProviderB implements ProviderInterface
         if ($provider) {
             $this->url = $provider->getUrl();
             $this->hasDiscount = $provider->isHasDiscount();
+            $this->providerEntity = $provider;
         }
     }
 
-    public function getQuote(CalculateRequestDTO $request): mixed
+    public function getQuote(CalculateRequestDTO $request): array
     {
         $providerRequest = ProviderBRequestDTO::fromCalculateRequestDTO($request);
 
@@ -43,11 +47,16 @@ class ProviderB implements ProviderInterface
             'xml_root_node_name' => 'SolicitudCotizacion'
         ]);
 
-        return $this->client->request('POST', $this->url, [
+        $response = $this->client->request('POST', $this->url, [
             'timeout' => 10,
             'headers' => ['Content-Type' => 'application/xml'],
             'body' => $xmlBody,
         ]);
+
+        return [
+            'response' => $response,
+            'payload' => $xmlBody
+        ];
     }
 
     public function getName(): string
@@ -61,7 +70,7 @@ class ProviderB implements ProviderInterface
         return $this->hasDiscount;
     }
 
-    public function getUrl()
+    public function getUrl(): string
     {
         return $this->url;
     }
@@ -78,6 +87,11 @@ class ProviderB implements ProviderInterface
             'price' => $dto->Precio,
             'currency' => $dto->Moneda ?? 'EUR'
         ];
+    }
+
+    public function getProviderEntity(): Provider
+    {
+        return $this->providerEntity;
     }
 
 }

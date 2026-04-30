@@ -11,6 +11,8 @@ use Symfony\Contracts\HttpClient\ResponseInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use App\Repository\ProviderRepository;
 
+use App\Entity\Provider;
+
 /**
  * HTTP Client Adapter for Provider A.
  * Communicates with the JSON-based pricing endpoint and maps responses to DTOs.
@@ -21,6 +23,7 @@ class ProviderA implements ProviderInterface
 
     private ?string $url = null;
     private ?bool $hasDiscount = null;
+    private ?Provider $providerEntity = null;
 
     public function __construct(
         private HttpClientInterface $client,
@@ -31,22 +34,28 @@ class ProviderA implements ProviderInterface
         if ($provider) {
             $this->url = $provider->getUrl();
             $this->hasDiscount = $provider->isHasDiscount();
+            $this->providerEntity = $provider;
         }
     }
 
-    public function getQuote(CalculateRequestDTO $request): mixed
+    public function getQuote(CalculateRequestDTO $request): array
     {
         $providerRequest = ProviderARequestDTO::fromCalculateRequestDTO($request);
         $jsonBody = $this->serializer->serialize($providerRequest, 'json');
 
-        return $this->client->request('POST', $this->url, [
+        $response = $this->client->request('POST', $this->url, [
             'timeout' => 10,
             'headers' => ['Content-Type' => 'application/json'],
             'body' => $jsonBody,
         ]);
+
+        return [
+            'response' => $response,
+            'payload' => $jsonBody
+        ];
     }
 
-    public function getUrl()
+    public function getUrl(): string
     {
         return $this->url;
     }
@@ -75,6 +84,11 @@ class ProviderA implements ProviderInterface
     public function hasCampaignDiscount(): bool
     {
         return $this->hasDiscount;
+    }
+
+    public function getProviderEntity(): Provider
+    {
+        return $this->providerEntity;
     }
 
 }
