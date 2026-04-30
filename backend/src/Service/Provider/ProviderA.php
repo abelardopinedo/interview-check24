@@ -9,6 +9,7 @@ use App\DTO\ProviderARequestDTO;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use App\Repository\ProviderRepository;
 
 /**
  * HTTP Client Adapter for Provider A.
@@ -22,9 +23,9 @@ class ProviderA implements ProviderInterface
     private ?bool $hasDiscount = null;
 
     public function __construct(
-        private \Symfony\Contracts\HttpClient\HttpClientInterface $client,
-        private \App\Repository\ProviderRepository $repository,
-        private \Symfony\Component\Serializer\SerializerInterface $serializer
+        private HttpClientInterface $client,
+        private ProviderRepository $repository,
+        private SerializerInterface $serializer
     ) {
         $provider = $this->repository->findOneByName($this->getName());
         if ($provider) {
