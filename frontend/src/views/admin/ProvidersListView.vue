@@ -52,9 +52,8 @@ const saveProvider = async () => {
     
     message.value = { text: 'Proveedor actualizado con éxito', type: 'success' };
     setTimeout(() => {
-      editingProvider.value = null;
       message.value = { text: '', type: '' };
-    }, 1500);
+    }, 3000);
   } catch (error) {
     console.error('Error saving provider:', error);
     message.value = { text: 'Error al actualizar el proveedor', type: 'error' };

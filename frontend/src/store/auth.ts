@@ -71,6 +71,21 @@ export const useAuth = () => {
     if (state.token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${state.token}`;
     }
+
+    // Add interceptor to handle expired tokens
+    axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          state.token = null;
+          state.user = null;
+          deleteCookie('jwt_token');
+          delete axios.defaults.headers.common['Authorization'];
+          window.location.href = '/admin/login';
+        }
+        return Promise.reject(error);
+      }
+    );
   };
 
   return {
