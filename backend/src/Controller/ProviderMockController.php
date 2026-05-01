@@ -144,4 +144,80 @@ final class ProviderMockController extends AbstractController
             return new Response($e->getMessage(), 422);
         }
     }
+
+    private function calculateProviderCPrice(array $input): float
+    {
+        $price = 185;
+
+        $driverAge = $input['driverInfo']['age'];
+        $carForm = $input['carInfo']['car_form'];
+        $carUse = $input['carInfo']['car_use'];
+
+        $price += match (true) {
+            $driverAge > 56 => 120,
+            $driverAge > 24 => 20,
+            $driverAge >= 18 => 90,
+            default => throw new \Exception("Invalid Age"),
+        };
+
+        $price += match ($carForm) {
+            "suv" => 120,
+            "compact" => 30,
+            default => throw new \Exception("Invalid Car Form"),
+        };
+
+        $price *= match ($carUse) {
+            "private" => 1,
+            "commercial" => 1.2,
+            default => throw new \Exception("Invalid Car Use"),
+        };
+
+        return $price;
+    }
+
+    #[Route('/provider-c/quote', methods: ['POST'])]
+    #[OA\Post(
+        summary: 'Mock endpoint for Provider C',
+        description: 'Simulates Provider C pricing engine (Nested JSON).'
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(
+                    property: 'driverInfo',
+                    properties: [
+                        new OA\Property(property: 'age', type: 'integer', example: 45)
+                    ],
+                    type: 'object'
+                ),
+                new OA\Property(
+                    property: 'carInfo',
+                    properties: [
+                        new OA\Property(property: 'car_form', type: 'string', example: 'suv'),
+                        new OA\Property(property: 'car_use', type: 'string', example: 'private')
+                    ],
+                    type: 'object'
+                )
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: 'Successful quote')]
+    public function providerCMock(Request $request): JsonResponse
+    {
+
+        sleep(3);
+
+        try {
+            $input = json_decode($request->getContent(), true);
+            $price = $this->calculateProviderCPrice($input);
+
+            return $this->json([
+                'payload' => ['price' => $price . " " . self::CURRENCY]
+            ]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 422);
+        }
+    }
+
 }

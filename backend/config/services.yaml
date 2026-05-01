@@ -27,9 +27,6 @@ services:
         App\Service\Provider\ProviderInterface:
             tags: ['app.insurance_provider']
 
-    App\Service\Provider\ProviderA: ~
-    App\Service\Provider\ProviderB: ~
-
     App\Service\ProviderSearchService:
         arguments:
             $providers: !tagged_iterator app.insurance_provider

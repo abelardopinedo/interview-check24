@@ -196,4 +196,45 @@ class ProviderMockControllerTest extends TestCase
 
         $this->invokePrivateMethod($this->controller, 'calculateProviderBPrice', [$input]);
     }
+
+    public function testCalculateProviderCPriceValidRequest(): void
+    {
+        $input = [
+            'driverInfo' => ['age' => 45],
+            'carInfo' => [
+                'car_form' => 'suv',
+                'car_use' => 'private'
+            ]
+        ];
+
+        $price = $this->invokePrivateMethod($this->controller, 'calculateProviderCPrice', [$input]);
+
+        // Base: 185
+        // Age (45 -> >24): +20
+        // Form (suv): +120
+        // Subtotal: 325
+        // Use (private): * 1
+        // Total: 325
+        $this->assertEquals(325.0, $price);
+    }
+
+    public function testCalculateProviderCPriceYoungDriverCommercialUse(): void
+    {
+        $input = [
+            'driverInfo' => ['age' => 20],
+            'carInfo' => [
+                'car_form' => 'compact',
+                'car_use' => 'commercial'
+            ]
+        ];
+
+        $price = $this->invokePrivateMethod($this->controller, 'calculateProviderCPrice', [$input]);
+
+        // Base: 185
+        // Age (20 -> >=18): +90
+        // Form (compact): +30
+        // Subtotal: 305
+        // Use (commercial): 305 * 1.2 = 366
+        $this->assertEqualsWithDelta(366.0, $price, 0.01);
+    }
 }
