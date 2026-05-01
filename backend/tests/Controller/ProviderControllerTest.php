@@ -10,7 +10,7 @@ class ProviderControllerTest extends WebTestCase
 {
     public function testListProviders(): void
     {
-        $client = static::createClient();
+        $client = $this->createAuthenticatedClient();
         $client->request('GET', '/providers');
 
         $this->assertResponseIsSuccessful();
@@ -22,7 +22,7 @@ class ProviderControllerTest extends WebTestCase
 
     public function testGetProviderNotFound(): void
     {
-        $client = static::createClient();
+        $client = $this->createAuthenticatedClient();
         $client->request('GET', '/providers/999999');
 
         $this->assertResponseStatusCodeSame(404);
@@ -30,7 +30,7 @@ class ProviderControllerTest extends WebTestCase
 
     public function testSearchProvider(): void
     {
-        $client = static::createClient();
+        $client = $this->createAuthenticatedClient();
 
         // Search for something that likely exists or just check structure
         $client->request('GET', '/providers/search?q=Provider');
@@ -42,7 +42,7 @@ class ProviderControllerTest extends WebTestCase
 
     public function testSearchProviderMissingQuery(): void
     {
-        $client = static::createClient();
+        $client = $this->createAuthenticatedClient();
         $client->request('GET', '/providers/search');
 
         $this->assertResponseStatusCodeSame(400);
@@ -50,7 +50,7 @@ class ProviderControllerTest extends WebTestCase
 
     public function testUpdateProvider(): void
     {
-        $client = static::createClient();
+        $client = $this->createAuthenticatedClient();
         $container = static::getContainer();
         $repo = $container->get(ProviderRepository::class);
         $em = $container->get('doctrine.orm.entity_manager');
@@ -90,7 +90,7 @@ class ProviderControllerTest extends WebTestCase
 
     public function testUpdateProviderInternalKeyShouldNotChange(): void
     {
-        $client = static::createClient();
+        $client = $this->createAuthenticatedClient();
         $container = static::getContainer();
         $repo = $container->get(ProviderRepository::class);
         $em = $container->get('doctrine.orm.entity_manager');
@@ -116,5 +116,25 @@ class ProviderControllerTest extends WebTestCase
 
         $this->assertEquals($originalInternalKey, $response['internal_key']);
         $this->assertEquals('Name change', $response['name']);
+    }
+
+    protected function createAuthenticatedClient(): \Symfony\Bundle\FrameworkBundle\KernelBrowser
+    {
+        $client = static::createClient();
+        $container = static::getContainer();
+
+        $userRepository = $container->get(\App\Repository\UserRepository::class);
+        $user = $userRepository->findOneBy(['username' => 'admin']);
+
+        if (!$user) {
+            throw new \RuntimeException('Admin user not found in test database.');
+        }
+
+        $jwtManager = $container->get('lexik_jwt_authentication.jwt_manager');
+        $token = $jwtManager->create($user);
+
+        $client->setServerParameter('HTTP_Authorization', sprintf('Bearer %s', $token));
+
+        return $client;
     }
 }

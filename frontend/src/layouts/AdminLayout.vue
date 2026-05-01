@@ -28,6 +28,10 @@
           <span class="icon">🏠</span>
           <span class="text">Volver a Web</span>
         </router-link>
+        <button @click="handleLogout" class="nav-item logout-btn">
+          <span class="icon">🚪</span>
+          <span class="text">Cerrar Sesión</span>
+        </button>
       </div>
     </aside>
 
@@ -36,6 +40,19 @@
     </main>
   </div>
 </template>
+
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+import { useAuth } from '../store/auth';
+
+const router = useRouter();
+const { logout } = useAuth();
+
+const handleLogout = async () => {
+  await logout();
+  router.push('/admin/login');
+};
+</script>
 
 <style scoped>
 .admin-layout {
@@ -116,6 +133,20 @@
 
 .back-home {
   margin-top: auto;
+}
+
+.logout-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  margin-top: 0.5rem;
+}
+
+.logout-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
 }
 
 .admin-content {

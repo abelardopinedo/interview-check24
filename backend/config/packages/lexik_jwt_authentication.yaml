@@ -1,0 +1,7 @@
+lexik_jwt_authentication:
+    secret_key: 'ad7f6e5d4c3b2a1a0b9c8d7e6f5a4b3c'
+    encoder:
+        signature_algorithm: HS256
+    blocklist_token:
+        enabled: true
+        cache: cache.app
