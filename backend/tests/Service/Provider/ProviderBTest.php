@@ -28,22 +28,25 @@ class ProviderBTest extends TestCase
     {
         $mockResponse = new MockResponse('<RespuestaCotizacion><Precio>310.0</Precio><Moneda>EUR</Moneda></RespuestaCotizacion>');
         $client = new MockHttpClient($mockResponse);
-        
+
         $repository = $this->createStub(ProviderRepository::class);
-        $providerEntity = (new Provider())->setUrl('http://test.local/provider-b/quote')->setHasDiscount(false);
-        $repository->method('findOneByName')->willReturn($providerEntity);
+        $providerEntity = (new Provider())
+            ->setName('Provider B')
+            ->setUrl('http://test.local/provider-b/quote')
+            ->setHasDiscount(false);
+        $repository->method('findOneBy')->willReturn($providerEntity);
 
         $provider = new ProviderB($client, $repository, $this->serializer);
-        
+
         $dto = new CalculateRequestDTO('1990-01-01', 'SUV', 'Comercial');
         $provider->getQuote($dto);
 
         $requestOptions = $mockResponse->getRequestOptions();
-        
+
         $this->assertArrayHasKey('body', $requestOptions);
-        
+
         $body = $requestOptions['body'];
-        
+
         $this->assertStringContainsString('<TipoCoche>suv</TipoCoche>', $body);
         $this->assertStringContainsString('<UsoCoche>comercial</UsoCoche>', $body);
         $this->assertStringContainsString('<ConductorOcasional>NO</ConductorOcasional>', $body);
@@ -57,21 +60,24 @@ class ProviderBTest extends TestCase
             <Moneda>EUR</Moneda>
         </RespuestaCotizacion>
         XML;
-        
+
         $mockResponse = new MockResponse($xmlResponse);
         $client = new MockHttpClient($mockResponse);
-        
+
         $repository = $this->createStub(ProviderRepository::class);
-        $providerEntity = (new Provider())->setUrl('http://test.local')->setHasDiscount(false);
-        $repository->method('findOneByName')->willReturn($providerEntity);
+        $providerEntity = (new Provider())
+            ->setName('Provider B')
+            ->setUrl('http://test.local')
+            ->setHasDiscount(false);
+        $repository->method('findOneBy')->willReturn($providerEntity);
 
         $provider = new ProviderB($client, $repository, $this->serializer);
-        
+
         $response = $client->request('POST', 'http://test.local');
-        
+
         $parsed = $provider->parseResponse($response);
 
-        $this->assertEquals('provider_b', $parsed['provider']);
+        $this->assertEquals('Provider B', $parsed['provider']);
         $this->assertEquals(450.75, $parsed['price']);
         $this->assertEquals('EUR', $parsed['currency']);
     }

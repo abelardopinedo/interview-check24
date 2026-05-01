@@ -21,6 +21,8 @@ interface ProviderInterface
 
     public function getName(): string;
 
+    public function getInternalKey(): string;
+
     public function hasCampaignDiscount(): bool;
 
     public function getProviderEntity(): Provider;

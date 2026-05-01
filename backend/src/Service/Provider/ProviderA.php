@@ -6,36 +6,17 @@ use App\DTO\CalculateRequestDTO;
 use App\DTO\ProviderAResponseDTO;
 use App\DTO\ProviderARequestDTO;
 
-use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
-use Symfony\Component\Serializer\SerializerInterface;
-use App\Repository\ProviderRepository;
-
-use App\Entity\Provider;
 
 /**
  * HTTP Client Adapter for Provider A.
  * Communicates with the JSON-based pricing endpoint and maps responses to DTOs.
  */
-class ProviderA implements ProviderInterface
+class ProviderA extends AbstractProvider
 {
-
-
-    private ?string $url = null;
-    private ?bool $hasDiscount = null;
-    private ?Provider $providerEntity = null;
-
-    public function __construct(
-        private HttpClientInterface $client,
-        private ProviderRepository $repository,
-        private SerializerInterface $serializer
-    ) {
-        $provider = $this->repository->findOneByName($this->getName());
-        if ($provider) {
-            $this->url = $provider->getUrl();
-            $this->hasDiscount = $provider->isHasDiscount();
-            $this->providerEntity = $provider;
-        }
+    public function getInternalKey(): string
+    {
+        return 'provider_a';
     }
 
     public function getQuote(CalculateRequestDTO $request): array
@@ -55,11 +36,6 @@ class ProviderA implements ProviderInterface
         ];
     }
 
-    public function getUrl(): string
-    {
-        return $this->url;
-    }
-
     public function parseResponse(ResponseInterface $response): array
     {
         $jsonContent = $response->getContent();
@@ -73,22 +49,6 @@ class ProviderA implements ProviderInterface
             'price' => (float) ($matches[0] ?? 0),
             'currency' => 'EUR'
         ];
-    }
-
-    public function getName(): string
-    {
-        return 'provider_a';
-    }
-
-
-    public function hasCampaignDiscount(): bool
-    {
-        return $this->hasDiscount;
-    }
-
-    public function getProviderEntity(): Provider
-    {
-        return $this->providerEntity;
     }
 
 }

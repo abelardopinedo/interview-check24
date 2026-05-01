@@ -9,6 +9,10 @@ use OpenApi\Attributes as OA;
 class UpdateProviderDTO
 {
 
+    #[Assert\Length(max: 255)]
+    #[OA\Property(description: "The display name of the provider.", example: "Allianz")]
+    public ?string $name = null;
+
     #[Assert\Url(requireTld: false)]
     #[Assert\Length(max: 255)]
     #[OA\Property(description: "The API URL of the provider.", example: "https://api.insurance.com")]

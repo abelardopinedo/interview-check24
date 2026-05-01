@@ -27,8 +27,11 @@ class ProviderATest extends TestCase
         $client = new MockHttpClient($mockResponse);
 
         $repository = $this->createStub(ProviderRepository::class);
-        $providerEntity = (new Provider())->setUrl('http://test.local/provider-a/quote')->setHasDiscount(true);
-        $repository->method('findOneByName')->willReturn($providerEntity);
+        $providerEntity = (new Provider())
+            ->setName('Provider A')
+            ->setUrl('http://test.local/provider-a/quote')
+            ->setHasDiscount(true);
+        $repository->method('findOneBy')->willReturn($providerEntity);
 
         $provider = new ProviderA($client, $repository, $this->serializer);
 
@@ -53,8 +56,11 @@ class ProviderATest extends TestCase
         $client = new MockHttpClient($mockResponse);
 
         $repository = $this->createStub(ProviderRepository::class);
-        $providerEntity = (new Provider())->setUrl('http://test.local')->setHasDiscount(false);
-        $repository->method('findOneByName')->willReturn($providerEntity);
+        $providerEntity = (new Provider())
+            ->setName('Provider A')
+            ->setUrl('http://test.local')
+            ->setHasDiscount(false);
+        $repository->method('findOneBy')->willReturn($providerEntity);
 
         $provider = new ProviderA($client, $repository, $this->serializer);
 
@@ -63,7 +69,7 @@ class ProviderATest extends TestCase
 
         $parsed = $provider->parseResponse($response);
 
-        $this->assertEquals('provider_a', $parsed['provider']);
+        $this->assertEquals('Provider A', $parsed['provider']);
         $this->assertEquals(315.5, $parsed['price']);
         $this->assertEquals('EUR', $parsed['currency']);
     }

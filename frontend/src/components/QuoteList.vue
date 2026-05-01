@@ -81,7 +81,7 @@ const sortedQuotes = computed<Quote[]>(() => {
 <style scoped>
 .quote-list-container {
   width: 100%;
-  max-width: 800px;
+  max-width: 1000px;
   margin: 2rem auto;
 }
 
@@ -118,6 +118,25 @@ const sortedQuotes = computed<Quote[]>(() => {
   vertical-align: middle;
 }
 
+/* Fix widths for consistent alignment */
+.quotes-table th:nth-child(2),
+.quotes-table td:nth-child(2) {
+  width: 110px;
+  text-align: right;
+}
+
+.quotes-table th:nth-child(3),
+.quotes-table td:nth-child(3) {
+  width: 140px;
+  text-align: right;
+}
+
+.quotes-table th:nth-child(4),
+.quotes-table td:nth-child(4) {
+  width: 180px;
+  text-align: right;
+}
+
 .quotes-table tbody tr:last-child td {
   border-bottom: none;
 }
@@ -130,24 +149,30 @@ const sortedQuotes = computed<Quote[]>(() => {
   font-weight: 600;
   color: var(--text-color);
   text-transform: capitalize;
+  max-width: 350px;
+  white-space: normal;
+  line-height: 1.4;
 }
 
 .provider-name-content {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .old-price-td {
   color: var(--error-color);
   text-decoration: line-through;
   font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .final-price {
   font-weight: 700;
   color: var(--primary-color);
   font-size: 1.1rem;
+  white-space: nowrap;
 }
 
 .cheapest-row {
@@ -181,6 +206,7 @@ const sortedQuotes = computed<Quote[]>(() => {
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: bold;
+  white-space: nowrap;
 }
 
 .muted-discount {

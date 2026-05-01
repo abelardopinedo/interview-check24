@@ -41,11 +41,13 @@ class LogController extends AbstractController
         $query = $request->query->get('query');
         $status = $request->query->get('status') ? (int) $request->query->get('status') : null;
         $sort = $request->query->get('sort', 'recent');
+        $startDate = $request->query->get('startDate');
+        $endDate = $request->query->get('endDate');
         
         $offset = ($page - 1) * $limit;
 
-        $logs = $this->requestLogRepository->searchLogs($query, $status, $sort, $limit, $offset);
-        $total = $this->requestLogRepository->countSearchLogs($query, $status);
+        $logs = $this->requestLogRepository->searchLogs($query, $status, $sort, $limit, $offset, $startDate, $endDate);
+        $total = $this->requestLogRepository->countSearchLogs($query, $status, $startDate, $endDate);
         
         $data = array_map(fn(RequestLog $log) => new LogSummaryDTO(
             $log->getId(),

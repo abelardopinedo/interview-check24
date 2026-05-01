@@ -118,6 +118,9 @@ class ProviderController extends AbstractController
             return $this->json(['error' => 'Provider not found'], Response::HTTP_NOT_FOUND);
         }
 
+        if ($dto->name !== null) {
+            $provider->setName($dto->name);
+        }
         if ($dto->url !== null) {
             $provider->setUrl($dto->url);
         }

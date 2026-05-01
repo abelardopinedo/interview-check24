@@ -6,37 +6,17 @@ use App\DTO\CalculateRequestDTO;
 use App\DTO\ProviderBResponseDTO;
 use App\DTO\ProviderBRequestDTO;
 
-use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
-
-use App\Repository\ProviderRepository;
-
-use App\Entity\Provider;
 
 /**
  * HTTP Client Adapter for Provider B.
  * Communicates with the XML-based pricing endpoint and maps responses to DTOs.
  */
-class ProviderB implements ProviderInterface
+class ProviderB extends AbstractProvider
 {
-
-
-    private ?string $url = null;
-    private ?bool $hasDiscount = null;
-    private ?Provider $providerEntity = null;
-
-    public function __construct(
-        private HttpClientInterface $client,
-        private ProviderRepository $repository,
-        private SerializerInterface $serializer
-    ) {
-        $provider = $this->repository->findOneByName($this->getName());
-        if ($provider) {
-            $this->url = $provider->getUrl();
-            $this->hasDiscount = $provider->isHasDiscount();
-            $this->providerEntity = $provider;
-        }
+    public function getInternalKey(): string
+    {
+        return 'provider_b';
     }
 
     public function getQuote(CalculateRequestDTO $request): array
@@ -59,22 +39,6 @@ class ProviderB implements ProviderInterface
         ];
     }
 
-    public function getName(): string
-    {
-        return 'provider_b';
-    }
-
-
-    public function hasCampaignDiscount(): bool
-    {
-        return $this->hasDiscount;
-    }
-
-    public function getUrl(): string
-    {
-        return $this->url;
-    }
-
 
     public function parseResponse(ResponseInterface $response): array
     {
@@ -87,11 +51,6 @@ class ProviderB implements ProviderInterface
             'price' => $dto->Precio,
             'currency' => $dto->Moneda ?? 'EUR'
         ];
-    }
-
-    public function getProviderEntity(): Provider
-    {
-        return $this->providerEntity;
     }
 
 }

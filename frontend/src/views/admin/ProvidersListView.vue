@@ -39,6 +39,7 @@ const saveProvider = async () => {
   
   try {
     const response = await axios.patch(`/api/providers/${editingProvider.value.id}`, {
+      name: editingProvider.value.name,
       url: editingProvider.value.url,
       has_discount: editingProvider.value.has_discount
     });
@@ -119,8 +120,8 @@ onMounted(fetchProviders);
 
           <form @submit.prevent="saveProvider" class="edit-form">
             <div class="form-group">
-              <label>Nombre del Proveedor (No editable)</label>
-              <input :value="editingProvider.name" type="text" disabled>
+              <label>Nombre del Proveedor</label>
+              <input v-model="editingProvider.name" type="text" required>
             </div>
 
             <div class="form-group">

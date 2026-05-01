@@ -85,8 +85,37 @@ class ProviderControllerTest extends WebTestCase
         $this->assertResponseIsSuccessful();
         $response = json_decode($client->getResponse()->getContent(), true);
 
-        $this->assertEquals($originalName, $response['name']);
-        $this->assertNotEquals($newName, $response['name']);
+        $this->assertEquals($newName, $response['name']);
         $this->assertTrue($response['has_discount']);
+    }
+
+    public function testUpdateProviderInternalKeyShouldNotChange(): void
+    {
+        $client = static::createClient();
+        $container = static::getContainer();
+        $repo = $container->get(ProviderRepository::class);
+        $em = $container->get('doctrine.orm.entity_manager');
+
+        $provider = $repo->findOneBy([]);
+        $id = $provider->getId();
+        $originalInternalKey = $provider->getInternalKey();
+
+        $client->request(
+            'PATCH',
+            '/providers/' . $id,
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            json_encode([
+                'internal_key' => 'hacky_key',
+                'name' => 'Name change'
+            ])
+        );
+
+        $this->assertResponseIsSuccessful();
+        $response = json_decode($client->getResponse()->getContent(), true);
+
+        $this->assertEquals($originalInternalKey, $response['internal_key']);
+        $this->assertEquals('Name change', $response['name']);
     }
 }

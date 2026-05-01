@@ -13,6 +13,8 @@ const isLoading = ref(true);
 const searchQuery = ref('');
 const statusFilter = ref('');
 const sortBy = ref('recent');
+const startDate = ref('');
+const endDate = ref('');
 const currentPage = ref(1);
 
 const fetchData = async () => {
@@ -23,7 +25,9 @@ const fetchData = async () => {
         page: currentPage.value,
         query: searchQuery.value || undefined,
         status: statusFilter.value || undefined,
-        sort: sortBy.value
+        sort: sortBy.value,
+        startDate: startDate.value || undefined,
+        endDate: endDate.value || undefined
       }
     });
     logs.value = response.data.data;
@@ -57,7 +61,7 @@ const setPage = (p: number) => {
 
 // Debounce search
 let searchTimeout: any;
-watch([searchQuery, statusFilter, sortBy], () => {
+watch([searchQuery, statusFilter, sortBy, startDate, endDate], () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     currentPage.value = 1;
@@ -85,9 +89,19 @@ onMounted(fetchData);
           <input 
             v-model="searchQuery" 
             type="text" 
-            placeholder="ID o Nombre de Proveedor..."
+            placeholder="ID de petición..."
           >
         </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Desde</label>
+        <input v-model="startDate" type="date">
+      </div>
+
+      <div class="filter-group">
+        <label>Hasta</label>
+        <input v-model="endDate" type="date">
       </div>
 
       <div class="filter-group">

@@ -13,5 +13,6 @@ class ProviderLogDTO
         public ?string $responsePayload,
         public string $url,
         public ?string $errorMessage
-    ) {}
+    ) {
+    }
 }

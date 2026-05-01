@@ -20,6 +20,10 @@ class Provider
     #[ORM\Column(length: 255)]
     private ?string $url = null;
 
+    #[ORM\Column(length: 255, unique: true)]
+    #[SerializedName("internal_key")]
+    private ?string $internalKey = null;
+
     #[ORM\Column]
     #[SerializedName("has_discount")]
     private ?bool $hasDiscount = null;
@@ -49,6 +53,18 @@ class Provider
     public function setUrl(string $url): static
     {
         $this->url = $url;
+
+        return $this;
+    }
+
+    public function getInternalKey(): ?string
+    {
+        return $this->internalKey;
+    }
+
+    public function setInternalKey(string $internalKey): static
+    {
+        $this->internalKey = $internalKey;
 
         return $this;
     }

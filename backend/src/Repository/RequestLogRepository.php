@@ -29,7 +29,9 @@ class RequestLogRepository extends ServiceEntityRepository
         ?int $status = null,
         string $sort = 'recent',
         int $limit = 20,
-        int $offset = 0
+        int $offset = 0,
+        ?string $startDate = null,
+        ?string $endDate = null
     ): array {
         $qb = $this->createQueryBuilder('rl');
 
@@ -37,14 +39,17 @@ class RequestLogRepository extends ServiceEntityRepository
             if (is_numeric($query)) {
                 $qb->andWhere('rl.id = :id')
                    ->setParameter('id', (int)$query);
-            } else {
-                // Search by provider name in related ProviderRequestLog
-                $qb->leftJoin('App\Entity\ProviderRequestLog', 'prl', 'WITH', 'prl.request = rl')
-                   ->leftJoin('prl.provider', 'p')
-                   ->andWhere('p.name LIKE :search')
-                   ->setParameter('search', '%' . $query . '%')
-                   ->distinct();
             }
+        }
+
+        if ($startDate) {
+            $qb->andWhere('rl.createdAt >= :startDate')
+               ->setParameter('startDate', new \DateTime($startDate . ' 00:00:00'));
+        }
+
+        if ($endDate) {
+            $qb->andWhere('rl.createdAt <= :endDate')
+               ->setParameter('endDate', new \DateTime($endDate . ' 23:59:59'));
         }
 
         if ($status) {
@@ -64,8 +69,12 @@ class RequestLogRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    public function countSearchLogs(?string $query = null, ?int $status = null): int
-    {
+    public function countSearchLogs(
+        ?string $query = null,
+        ?int $status = null,
+        ?string $startDate = null,
+        ?string $endDate = null
+    ): int {
         $qb = $this->createQueryBuilder('rl')
                    ->select('count(DISTINCT rl.id)');
 
@@ -73,12 +82,17 @@ class RequestLogRepository extends ServiceEntityRepository
             if (is_numeric($query)) {
                 $qb->andWhere('rl.id = :id')
                    ->setParameter('id', (int)$query);
-            } else {
-                $qb->leftJoin('App\Entity\ProviderRequestLog', 'prl', 'WITH', 'prl.request = rl')
-                   ->leftJoin('prl.provider', 'p')
-                   ->andWhere('p.name LIKE :search')
-                   ->setParameter('search', '%' . $query . '%');
             }
+        }
+
+        if ($startDate) {
+            $qb->andWhere('rl.createdAt >= :startDate')
+               ->setParameter('startDate', new \DateTime($startDate . ' 00:00:00'));
+        }
+
+        if ($endDate) {
+            $qb->andWhere('rl.createdAt <= :endDate')
+               ->setParameter('endDate', new \DateTime($endDate . ' 23:59:59'));
         }
 
         if ($status) {
