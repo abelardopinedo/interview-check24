@@ -8,7 +8,7 @@ class ProviderLogDTO
         public string $providerName,
         public string $status,
         public ?int $httpCode,
-        public int $latency,
+        public ?int $latency,
         public ?string $requestPayload,
         public ?string $responsePayload,
         public string $url,

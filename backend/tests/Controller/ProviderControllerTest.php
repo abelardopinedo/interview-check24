@@ -67,7 +67,6 @@ class ProviderControllerTest extends WebTestCase
         }
 
         $id = $provider->getId();
-        $originalName = $provider->getName();
         $newName = 'Updated Name ' . uniqid();
 
         $client->request(

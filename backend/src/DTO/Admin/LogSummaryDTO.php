@@ -8,8 +8,8 @@ class LogSummaryDTO
         public int $id,
         public string $endpoint,
         public string $httpMethod,
-        public int $statusCode,
-        public int $latency,
+        public ?int $statusCode,
+        public ?int $latency,
         public \DateTimeImmutable $createdAt
     ) {}
 }
