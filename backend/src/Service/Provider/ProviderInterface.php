@@ -28,4 +28,7 @@ interface ProviderInterface
     public function getProviderEntity(): Provider;
 
     public function getUrl(): string;
+    
+    public function applyDiscounts(array $quote): array;
 }
+

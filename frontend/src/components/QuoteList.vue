@@ -70,7 +70,7 @@ const sortedQuotes = computed<Quote[]>(() => {
                 <span v-else>{{ quote.price }} {{ quote.currency }}</span>
               </td>
               <td>
-                <span v-if="quote.discount_price" class="discount-badge" :class="{ 'muted-discount': getFinalPrice(quote) !== cheapestPrice }">Campaña del 5%</span>
+                <span v-if="quote.discount_price" class="discount-badge" :class="{ 'muted-discount': getFinalPrice(quote) !== cheapestPrice }">Campaña Activa</span>
                 <span v-else class="text-muted">-</span>
               </td>
             </tr>

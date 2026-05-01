@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import { insuranceApi } from '../../api/insurance';
 
 interface Provider {
   id: number;
@@ -18,8 +18,7 @@ const message = ref({ text: '', type: '' });
 const fetchProviders = async () => {
   isLoading.value = true;
   try {
-    const response = await axios.get('/api/providers');
-    providers.value = response.data;
+    providers.value = await insuranceApi.getProviders();
   } catch (error) {
     console.error('Error fetching providers:', error);
   } finally {
@@ -38,7 +37,7 @@ const saveProvider = async () => {
   message.value = { text: '', type: '' };
   
   try {
-    const response = await axios.patch(`/api/providers/${editingProvider.value.id}`, {
+    const data = await insuranceApi.updateProvider(editingProvider.value.id, {
       name: editingProvider.value.name,
       url: editingProvider.value.url,
       has_discount: editingProvider.value.has_discount
@@ -47,7 +46,7 @@ const saveProvider = async () => {
     // Update local list
     const index = providers.value.findIndex(p => p.id === editingProvider.value?.id);
     if (index !== -1) {
-      providers.value[index] = response.data;
+      providers.value[index] = data;
     }
     
     message.value = { text: 'Proveedor actualizado con éxito', type: 'success' };

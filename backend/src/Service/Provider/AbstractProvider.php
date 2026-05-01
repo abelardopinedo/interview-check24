@@ -24,6 +24,10 @@ abstract class AbstractProvider implements ProviderInterface
         protected ProviderRepository $repository,
         protected SerializerInterface $serializer
     ) {
+        /**
+         * We could do this on a lazy way, but the result will be the same since we always
+         * use the data from db when we instantiate the provider.
+         */
         $provider = $this->repository->findOneBy(['internalKey' => $this->getInternalKey()]);
         if ($provider) {
             $this->url = $provider->getUrl();
@@ -61,4 +65,13 @@ abstract class AbstractProvider implements ProviderInterface
         }
         return $this->providerEntity;
     }
+
+    public function applyDiscounts(array $quote): array
+    {
+        if ($this->hasCampaignDiscount()) {
+            $quote['discount_price'] = ceil($quote['price'] * 0.95);
+        }
+        return $quote;
+    }
 }
+

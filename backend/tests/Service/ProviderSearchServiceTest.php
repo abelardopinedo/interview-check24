@@ -40,6 +40,12 @@ class ProviderSearchServiceTest extends TestCase
         ]);
 
         $provider->method('getProviderEntity')->willReturn(new Provider());
+        $provider->method('applyDiscounts')->willReturnCallback(function ($quote) use ($hasDiscount) {
+            if ($hasDiscount) {
+                $quote['discount_price'] = round($quote['price'] * 0.95, 2);
+            }
+            return $quote;
+        });
 
         return $provider;
     }

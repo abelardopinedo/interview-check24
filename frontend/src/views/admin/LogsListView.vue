@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import axios from 'axios';
+import { adminApi } from '../../api/admin';
 import LogTable from '../../components/admin/LogTable.vue';
 import LogWaterfall from '../../components/admin/LogWaterfall.vue';
 
@@ -20,18 +20,16 @@ const currentPage = ref(1);
 const fetchData = async () => {
   isLoading.value = true;
   try {
-    const response = await axios.get('/api/admin/logs', {
-      params: {
-        page: currentPage.value,
-        query: searchQuery.value || undefined,
-        status: statusFilter.value || undefined,
-        sort: sortBy.value,
-        startDate: startDate.value || undefined,
-        endDate: endDate.value || undefined
-      }
+    const data = await adminApi.getLogs({
+      page: currentPage.value,
+      query: searchQuery.value || undefined,
+      status: statusFilter.value || undefined,
+      sort: sortBy.value,
+      startDate: startDate.value || undefined,
+      endDate: endDate.value || undefined
     });
-    logs.value = response.data.data;
-    meta.value = response.data.meta;
+    logs.value = data.data;
+    meta.value = data.meta;
   } catch (error) {
     console.error('Error fetching logs:', error);
   } finally {
@@ -41,8 +39,7 @@ const fetchData = async () => {
 
 const selectLog = async (id: number) => {
   try {
-    const response = await axios.get(`/api/admin/logs/${id}`);
-    selectedLog.value = response.data;
+    selectedLog.value = await adminApi.getLogDetails(id);
     setTimeout(() => {
       document.querySelector('.details-section')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);

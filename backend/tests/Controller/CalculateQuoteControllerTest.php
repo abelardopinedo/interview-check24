@@ -98,6 +98,7 @@ class CalculateQuoteControllerTest extends WebTestCase
             'price' => 100.0,
             'currency' => 'EUR'
         ]);
+        $providerEnrolled->method('applyDiscounts')->willReturnCallback(fn($q) => array_merge($q, ['discount_price' => 95.0]));
 
         // Mock Provider without Campaign Discount
         $providerNotEnrolled = $this->createStub(ProviderInterface::class);
@@ -113,6 +114,7 @@ class CalculateQuoteControllerTest extends WebTestCase
             'price' => 100.0,
             'currency' => 'EUR'
         ]);
+        $providerNotEnrolled->method('applyDiscounts')->willReturnArgument(0);
 
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects($this->exactly(2))
@@ -150,6 +152,7 @@ class CalculateQuoteControllerTest extends WebTestCase
         $responseMockA->method('getStatusCode')->willReturn(200);
         $providerA->method('getQuote')->willReturn(['response' => $responseMockA, 'payload' => '{"test": "data"}']);
         $providerA->method('parseResponse')->willReturn(['provider' => 'provider_a', 'price' => 100.0, 'currency' => 'EUR']);
+        $providerA->method('applyDiscounts')->willReturnArgument(0);
 
         // Provider B: 102 EUR, has discount (96.9)
         $providerB = $this->createStub(ProviderInterface::class);
@@ -159,6 +162,7 @@ class CalculateQuoteControllerTest extends WebTestCase
         $responseMockB->method('getStatusCode')->willReturn(200);
         $providerB->method('getQuote')->willReturn(['response' => $responseMockB, 'payload' => '{"test": "data"}']);
         $providerB->method('parseResponse')->willReturn(['provider' => 'provider_b', 'price' => 102.0, 'currency' => 'EUR']);
+        $providerB->method('applyDiscounts')->willReturnCallback(fn($q) => array_merge($q, ['discount_price' => 96.9]));
 
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects($this->exactly(2))
@@ -201,6 +205,7 @@ class CalculateQuoteControllerTest extends WebTestCase
             'price' => 150.0,
             'currency' => 'EUR'
         ]);
+        $successfulProvider->method('applyDiscounts')->willReturnArgument(0);
 
         $entityManager = $this->createMock(EntityManagerInterface::class);
         $entityManager->expects($this->exactly(2))

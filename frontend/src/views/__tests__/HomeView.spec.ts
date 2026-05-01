@@ -1,10 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import HomeView from '../HomeView.vue'
-import axios from 'axios'
+import { insuranceApi } from '../../api/insurance'
 
-vi.mock('axios')
-const mockedAxios = vi.mocked(axios, true)
+vi.mock('../../api/insurance', () => ({
+  insuranceApi: {
+    calculateQuotes: vi.fn()
+  }
+}))
 
 describe('HomeView.vue', () => {
   beforeEach(() => {
@@ -12,17 +15,15 @@ describe('HomeView.vue', () => {
   })
 
   it('shows loading state and fetches quotes on form submit', async () => {
-    mockedAxios.post.mockResolvedValueOnce({
-      data: [
-        { provider: 'Provider A', price: 100, currency: 'EUR' }
-      ]
-    })
+    vi.mocked(insuranceApi.calculateQuotes).mockResolvedValueOnce([
+      { provider: 'Provider A', price: 100, currency: 'EUR' }
+    ])
 
     const wrapper = mount(HomeView)
     
     // Simulate form submission emitted by QuoteForm
     const quoteForm = wrapper.findComponent({ name: 'QuoteForm' })
-    await quoteForm.vm.$emit('submit', { driverBirthday: '1990-01-01', carType: 'SUV', carUse: 'Privado' })
+    await quoteForm.vm.$emit('submit', { driver_birthday: '1990-01-01', car_type: 'SUV', car_use: 'Privado' })
 
     // Check loading state
     expect(wrapper.find('.loading-spinner').exists()).toBe(true)
@@ -39,13 +40,13 @@ describe('HomeView.vue', () => {
   })
 
   it('displays validation errors on 422 response', async () => {
-    mockedAxios.post.mockRejectedValueOnce({
+    vi.mocked(insuranceApi.calculateQuotes).mockRejectedValueOnce({
       response: {
         status: 422,
         data: {
           detail: 'Validation errors',
           violations: [
-            { propertyPath: 'driverBirthday', title: 'Invalid date' }
+            { propertyPath: 'driver_birthday', title: 'Invalid date' }
           ]
         }
       }
@@ -54,12 +55,12 @@ describe('HomeView.vue', () => {
     const wrapper = mount(HomeView)
     
     const quoteForm = wrapper.findComponent({ name: 'QuoteForm' })
-    await quoteForm.vm.$emit('submit', { driverBirthday: 'invalid', carType: 'SUV', carUse: 'Privado' })
+    await quoteForm.vm.$emit('submit', { driver_birthday: 'invalid', car_type: 'SUV', car_use: 'Privado' })
 
     await flushPromises()
 
     // Error message should be visible
-    expect(wrapper.text()).toContain('driverBirthday: Invalid date')
+    expect(wrapper.text()).toContain('driver_birthday: Invalid date')
     expect(wrapper.find('.error-alert').exists()).toBe(true)
   })
 })

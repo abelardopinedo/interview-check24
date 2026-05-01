@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import axios from 'axios';
+import { insuranceApi } from '../api/insurance';
 import QuoteForm from '../components/QuoteForm.vue';
 import QuoteList from '../components/QuoteList.vue';
 import type { Quote } from '../types/Quote';
@@ -19,8 +19,7 @@ const calculateQuotes = async (payload: RequestQuote) => {
   quotes.value = [];
 
   try {
-    const response = await axios.post('/api/calculate', payload);
-    quotes.value = response.data;
+    quotes.value = await insuranceApi.calculateQuotes(payload);
   } catch (error: any) {
     if (error.response && error.response.status === 422) {
       const violations = error.response.data.violations;

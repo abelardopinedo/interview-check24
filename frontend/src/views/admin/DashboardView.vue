@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import { adminApi } from '../../api/admin';
 import PerformanceStats from '../../components/admin/PerformanceStats.vue';
 import LogTable from '../../components/admin/LogTable.vue';
 import LogWaterfall from '../../components/admin/LogWaterfall.vue';
@@ -13,12 +13,12 @@ const isLoading = ref(true);
 const fetchData = async () => {
   isLoading.value = true;
   try {
-    const [logsRes, statsRes] = await Promise.all([
-      axios.get('/api/admin/logs?limit=5'),
-      axios.get('/api/admin/logs/stats/performance')
+    const [logsData, statsData] = await Promise.all([
+      adminApi.getLogs({ limit: 5 }),
+      adminApi.getPerformanceStats()
     ]);
-    logs.value = logsRes.data.data;
-    stats.value = statsRes.data;
+    logs.value = logsData.data;
+    stats.value = statsData;
   } catch (error) {
     console.error('Error fetching dashboard data:', error);
   } finally {
@@ -28,8 +28,7 @@ const fetchData = async () => {
 
 const selectLog = async (id: number) => {
   try {
-    const response = await axios.get(`/api/admin/logs/${id}`);
-    selectedLog.value = response.data;
+    selectedLog.value = await adminApi.getLogDetails(id);
     setTimeout(() => {
       document.querySelector('.details-section')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);

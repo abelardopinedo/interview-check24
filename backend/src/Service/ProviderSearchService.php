@@ -78,13 +78,7 @@ class ProviderSearchService
                 if ($statusCode === 200) {
                     $pLog->setStatus('completed');
                     $normalized = $provider->parseResponse($response);
-
-                    // Apply a flat 5% discount if the provider is enrolled in the campaign
-                    if ($provider->hasCampaignDiscount()) {
-                        $normalized['discount_price'] = round($normalized['price'] * 0.95, 2);
-                    }
-
-                    $results[] = $normalized;
+                    $results[] = $provider->applyDiscounts($normalized);
                 } else {
                     $pLog->setStatus('failed');
                 }
