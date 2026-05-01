@@ -39,41 +39,82 @@ const sortedQuotes = computed<Quote[]>(() => {
       <p>No hay ofertas disponibles.</p>
     </div>
 
-    <div v-else class="table-container glass-panel">
-      <table class="quotes-table">
-        <thead>
-          <tr>
-            <th>Proveedor</th>
-            <th>Precio</th>
-            <th class="sortable-header" @click="toggleSort">
-              Precio Final
-              <span class="sort-icon">{{ sortAscending ? '↑' : '↓' }}</span>
-            </th>
-            <th>Descuento</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(quote, index) in sortedQuotes" :key="index" :class="{ 'cheapest-row': getFinalPrice(quote) === cheapestPrice }">
-            <td class="provider-name">
-              <div class="provider-name-content">
-                {{ quote.provider }}
-                <span v-if="getFinalPrice(quote) === cheapestPrice" class="best-price-badge">¡Mejor Precio!</span>
-              </div>
-            </td>
-            <td :class="{ 'old-price-td': quote.discount_price }">
-              <span>{{ quote.price }} {{ quote.currency }}</span>
-            </td>
-            <td class="final-price" :class="{ 'cheapest-price-text': getFinalPrice(quote) === cheapestPrice }">
-              <span v-if="quote.discount_price">{{ quote.discount_price }} {{ quote.currency }}</span>
-              <span v-else>{{ quote.price }} {{ quote.currency }}</span>
-            </td>
-            <td>
-              <span v-if="quote.discount_price" class="discount-badge" :class="{ 'muted-discount': getFinalPrice(quote) !== cheapestPrice }">Campaña del 5%</span>
-              <span v-else class="text-muted">-</span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-else>
+      <!-- Table View (Desktop/Tablet) -->
+      <div class="table-container glass-panel desktop-only">
+        <table class="quotes-table">
+          <thead>
+            <tr>
+              <th>Proveedor</th>
+              <th>Precio Base</th>
+              <th class="sortable-header" @click="toggleSort">
+                Precio Final
+                <span class="sort-icon">{{ sortAscending ? '↑' : '↓' }}</span>
+              </th>
+              <th>Descuento</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(quote, index) in sortedQuotes" :key="index" :class="{ 'cheapest-row': getFinalPrice(quote) === cheapestPrice }">
+              <td class="provider-name">
+                <div class="provider-name-content">
+                  {{ quote.provider }}
+                  <span v-if="getFinalPrice(quote) === cheapestPrice" class="best-price-badge">¡Mejor Precio!</span>
+                </div>
+              </td>
+              <td :class="{ 'old-price-td': quote.discount_price }">
+                <span>{{ quote.price }} {{ quote.currency }}</span>
+              </td>
+              <td class="final-price" :class="{ 'cheapest-price-text': getFinalPrice(quote) === cheapestPrice }">
+                <span v-if="quote.discount_price">{{ quote.discount_price }} {{ quote.currency }}</span>
+                <span v-else>{{ quote.price }} {{ quote.currency }}</span>
+              </td>
+              <td>
+                <span v-if="quote.discount_price" class="discount-badge" :class="{ 'muted-discount': getFinalPrice(quote) !== cheapestPrice }">Campaña del 5%</span>
+                <span v-else class="text-muted">-</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Card View (Mobile) -->
+      <div class="mobile-cards mobile-only">
+        <div class="mobile-sort-toggle glass-panel" @click="toggleSort">
+          Ordenar por precio: {{ sortAscending ? 'Menor a Mayor ↑' : 'Mayor a Menor ↓' }}
+        </div>
+        
+        <div 
+          v-for="(quote, index) in sortedQuotes" 
+          :key="'card-' + index" 
+          class="quote-card glass-panel"
+          :class="{ 'cheapest-card': getFinalPrice(quote) === cheapestPrice }"
+        >
+          <div class="card-header">
+            <span class="card-provider">{{ quote.provider }}</span>
+            <span v-if="getFinalPrice(quote) === cheapestPrice" class="best-price-badge">¡Mejor Precio!</span>
+          </div>
+          
+          <div class="card-body">
+            <div class="card-row">
+              <span class="row-label">Precio Base:</span>
+              <span :class="{ 'old-price-td': quote.discount_price }">{{ quote.price }} {{ quote.currency }}</span>
+            </div>
+            <div class="card-row">
+              <span class="row-label">Descuento:</span>
+              <span v-if="quote.discount_price" class="discount-badge">Campaña 5%</span>
+              <span v-else>-</span>
+            </div>
+            <div class="card-divider"></div>
+            <div class="card-row final">
+              <span class="row-label">Precio Final:</span>
+              <span class="final-price" :class="{ 'cheapest-price-text': getFinalPrice(quote) === cheapestPrice }">
+                {{ getFinalPrice(quote) }} {{ quote.currency }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -110,6 +151,7 @@ const sortedQuotes = computed<Quote[]>(() => {
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.85rem;
+  white-space: nowrap; /* Prevent any header from wrapping */
 }
 
 .quotes-table td {
@@ -121,8 +163,9 @@ const sortedQuotes = computed<Quote[]>(() => {
 /* Fix widths for consistent alignment */
 .quotes-table th:nth-child(2),
 .quotes-table td:nth-child(2) {
-  width: 110px;
+  width: 150px; /* Increased from 110px */
   text-align: right;
+  white-space: nowrap;
 }
 
 .quotes-table th:nth-child(3),
@@ -233,5 +276,99 @@ const sortedQuotes = computed<Quote[]>(() => {
   display: inline-block;
   margin-left: 0.25rem;
   font-weight: bold;
+}
+
+
+.desktop-only {
+  display: block !important;
+}
+
+.mobile-only {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-only {
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  .quote-list-container {
+    padding: 0 1rem;
+    margin: 1rem auto;
+  }
+}
+
+/* Card View Styles */
+.mobile-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Increased spacing between cards */
+}
+
+.mobile-sort-toggle {
+  padding: 0.875rem;
+  text-align: center;
+  font-weight: 600;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: 1rem; /* Space between toggle and first card */
+}
+
+.quote-card {
+  padding: 0.75rem 1rem; /* Even more compact padding */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Reduced internal gap */
+}
+
+.cheapest-card {
+  border: 1px solid var(--success-color);
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-provider {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color);
+  text-transform: capitalize;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem; /* Tightened body spacing */
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-row.final {
+  margin-top: 0.5rem;
+}
+
+.row-label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.card-divider {
+  height: 1px;
+  background-color: var(--panel-border);
+  margin: 0.25rem 0;
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue';
+import { ref, reactive, watch } from 'vue';
 import type { RequestQuote } from '../types/RequestQuote';
 
 const emit = defineEmits<{
@@ -7,8 +7,9 @@ const emit = defineEmits<{
   (e: 'error', errors: string[]): void;
 }>();
 
-// For 60+ fields, initializing a single state object is much more scalable.
-// We also parse/stringify the entire object for sessionStorage.
+const currentStep = ref(1);
+const transitionName = ref('slide-next');
+
 const getInitialState = (): RequestQuote => {
   const stored = sessionStorage.getItem('quoteFormState');
   if (stored) {
@@ -27,22 +28,16 @@ const getInitialState = (): RequestQuote => {
 
 const formState = reactive<RequestQuote>(getInitialState());
 
-// A single deep watcher replaces having 60+ individual watchers
 watch(formState, (newState) => {
   sessionStorage.setItem('quoteFormState', JSON.stringify(newState));
 }, { deep: true });
 
-const handleSubmit = () => {
+const nextStep = () => {
   const errors: string[] = [];
-  
-  if (!formState.driver_birthday) {
-    errors.push('El campo Fecha de nacimiento es obligatorio.');
-  }
-  if (!formState.car_type) {
-    errors.push('El campo Tipo de coche es obligatorio.');
-  }
-  if (!formState.car_use) {
-    errors.push('El campo Uso del coche es obligatorio.');
+  if (currentStep.value === 1 && !formState.driver_birthday) {
+    errors.push('La fecha de nacimiento es obligatoria.');
+  } else if (currentStep.value === 2 && !formState.car_type) {
+    errors.push('El tipo de coche es obligatorio.');
   }
 
   if (errors.length > 0) {
@@ -50,57 +45,108 @@ const handleSubmit = () => {
     return;
   }
 
-  // Clear errors locally (if we had them) and submit
+  emit('error', []); // Clear errors on progress
+  if (currentStep.value < 3) {
+    transitionName.value = 'slide-next';
+    currentStep.value++;
+  } else {
+    handleSubmit();
+  }
+};
+
+const prevStep = () => {
+  if (currentStep.value > 1) {
+    transitionName.value = 'slide-prev';
+    currentStep.value--;
+  }
+};
+
+const handleSubmit = () => {
+  const errors: string[] = [];
+  if (!formState.car_use) {
+    errors.push('El uso del coche es obligatorio.');
+  }
+
+  if (errors.length > 0) {
+    emit('error', errors);
+    return;
+  }
+
   emit('submit', { ...formState });
 };
+
+// Reset step to 1 when component is mounted or as needed
+const resetStep = () => {
+  currentStep.value = 1;
+};
+
+defineExpose({ resetStep });
 </script>
 
 <template>
   <div class="quote-form-container glass-panel">
-    <h2>Comparador de seguros de coche</h2>
-    <p class="subtitle">Ingresa tu informacion para comparar precios.</p>
+    <div class="step-indicator">
+      <div v-for="step in 3" :key="step" :class="['step-dot', { active: currentStep === step, completed: currentStep > step }]"></div>
+    </div>
+    
+    <h2>Comparador de seguros</h2>
+    
+    <div class="step-content">
+      <Transition :name="transitionName">
+        <div :key="currentStep" class="form-step">
+          <p class="subtitle" v-if="currentStep === 1">Paso 1: Tu fecha de nacimiento</p>
+          <p class="subtitle" v-if="currentStep === 2">Paso 2: Tipo de coche</p>
+          <p class="subtitle" v-if="currentStep === 3">Paso 3: Uso del coche</p>
 
-    <form @submit.prevent="handleSubmit" class="quote-form" novalidate>
-      
-      <div class="form-group">
-        <label for="driverBirthday">Fecha de nacimiento</label>
-        <input 
-          id="driverBirthday"
-          type="date" 
-          name="driverBirthday" 
-          v-model="formState.driver_birthday" 
-          required 
-        />
-      </div>
+          <form @submit.prevent="nextStep" class="quote-form" novalidate>
+            
+            <div v-if="currentStep === 1" class="form-group">
+              <label for="driverBirthday">Fecha de nacimiento</label>
+              <input 
+                id="driverBirthday"
+                type="date" 
+                name="driverBirthday" 
+                v-model="formState.driver_birthday" 
+                required 
+              />
+            </div>
 
-      <div class="form-group">
-        <label for="carType">Tipo de coche</label>
-        <select id="carType" name="carType" v-model="formState.car_type" required>
-          <option value="" disabled>Seleccionar tipo de coche</option>
-          <option value="Turismo">Turismo</option>
-          <option value="SUV">SUV</option>
-          <option value="Compacto">Compacto</option>
-        </select>
-      </div>
+            <div v-if="currentStep === 2" class="form-group">
+              <label for="carType">Tipo de coche</label>
+              <select id="carType" name="carType" v-model="formState.car_type" required>
+                <option value="" disabled>Seleccionar tipo de coche</option>
+                <option value="Turismo">Turismo</option>
+                <option value="SUV">SUV</option>
+                <option value="Compacto">Compacto</option>
+              </select>
+            </div>
 
-      <div class="form-group">
-        <label>Uso del coche</label>
-        <div class="radio-group">
-          <label class="radio-label">
-            <input type="radio" name="carUse" value="Privado" v-model="formState.car_use" required>
-            Privado
-          </label>
-          <label class="radio-label">
-            <input type="radio" name="carUse" value="Comercial" v-model="formState.car_use" required>
-            Comercial
-          </label>
+            <div v-if="currentStep === 3" class="form-group">
+              <label>Uso del coche</label>
+              <div class="radio-group">
+                <label :class="['radio-label', { selected: formState.car_use === 'Privado' }]">
+                  <input type="radio" name="carUse" value="Privado" v-model="formState.car_use" required>
+                  <span>Privado</span>
+                </label>
+                <label :class="['radio-label', { selected: formState.car_use === 'Comercial' }]">
+                  <input type="radio" name="carUse" value="Comercial" v-model="formState.car_use" required>
+                  <span>Comercial</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-navigation">
+              <button v-if="currentStep > 1" type="button" @click="prevStep" class="nav-btn secondary">
+                Anterior
+              </button>
+              <button type="submit" class="nav-btn primary">
+                {{ currentStep === 3 ? 'Calcular' : 'Continuar' }}
+              </button>
+            </div>
+          </form>
         </div>
-      </div>
-
-      <button type="submit" class="submit-btn">
-        Calcular
-      </button>
-    </form>
+      </Transition>
+    </div>
   </div>
 </template>
 
@@ -111,6 +157,7 @@ const handleSubmit = () => {
   margin: 0 auto;
   padding: 2rem;
   box-sizing: border-box;
+  overflow: hidden; /* Prevent horizontal scroll during transitions */
 }
 
 h2 {
@@ -145,7 +192,7 @@ label {
   color: var(--text-color);
 }
 
-input, select {
+input:not([type="radio"]), select {
   width: 100%;
   padding: 0.75rem 1rem;
   border-radius: 8px;
@@ -158,66 +205,189 @@ input, select {
   appearance: none;
 }
 
-input:focus, select:focus {
+input:not([type="radio"]):focus, select:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px var(--primary-color-alpha);
 }
 
-.submit-btn {
-  margin-top: 1rem;
-  padding: 0.875rem 1.5rem;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.submit-btn:hover:not(:disabled) {
-  background-color: var(--primary-hover);
-  transform: translateY(-1px);
-}
-
-.submit-btn:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.submit-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Custom dropdown arrow for selects */
-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 1.2rem;
-  padding-right: 2.5rem;
-}
-
 .radio-group {
   display: flex;
-  gap: 1.5rem;
-  padding: 0.5rem 0;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 
 .radio-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 400;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background-color: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.radio-label:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary-color);
+}
+
+.radio-label.selected {
+  background-color: var(--primary-color-alpha);
+  border-color: var(--primary-color);
+}
+
+/* Custom Radio Button Styling */
+.radio-label input[type="radio"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-color);
+  border-radius: 50%;
+  margin: 0;
+  display: grid;
+  place-content: center;
+  transition: all 0.2s ease;
   cursor: pointer;
 }
 
-.radio-label input[type="radio"] {
-  width: auto;
-  appearance: auto;
-  padding: 0;
-  margin: 0;
+.radio-label input[type="radio"]::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em var(--primary-color);
+}
+
+.radio-label input[type="radio"]:checked {
+  border-color: var(--primary-color);
+}
+
+.radio-label input[type="radio"]:checked::before {
+  transform: scale(1);
+}
+
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.step-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.step-dot.active {
+  background-color: var(--primary-color);
+  transform: scale(1.2);
+}
+
+.step-dot.completed {
+  background-color: var(--success-color, #10b981);
+}
+
+.form-navigation {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.nav-btn {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.nav-btn.primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.nav-btn.primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.nav-btn.secondary {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.nav-btn.secondary:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* iOS-style Lateral Transitions */
+.slide-next-enter-active,
+.slide-next-leave-active,
+.slide-prev-enter-active,
+.slide-prev-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Going Forward: Next step slides in from right, current step slides out to left */
+.slide-next-enter-from {
+  transform: translateX(100%);
+  opacity: 0;
+}
+.slide-next-leave-to {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+/* Going Backward: Prev step slides in from left, current step slides out to right */
+.slide-prev-enter-from {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+.slide-prev-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.step-content {
+  display: grid;
+  grid-template-areas: "stack";
+  overflow: hidden;
+}
+
+.form-step {
+  grid-area: stack;
+  width: 100%;
+}
+@media (max-width: 768px) {
+  .quote-form-container {
+    padding: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .nav-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .radio-label {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
 }
 </style>

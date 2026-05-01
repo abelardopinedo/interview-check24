@@ -10,6 +10,7 @@ const quotes = ref<Quote[]>([]);
 const isLoading = ref(false);
 const hasSearched = ref(false);
 const formErrors = ref<string[]>([]);
+const quoteFormRef = ref<any>(null);
 
 const calculateQuotes = async (payload: RequestQuote) => {
   isLoading.value = true;
@@ -33,6 +34,10 @@ const calculateQuotes = async (payload: RequestQuote) => {
     }
   } finally {
     isLoading.value = false;
+    // When done, reset the form to step 1
+    if (quoteFormRef.value) {
+      quoteFormRef.value.resetStep();
+    }
   }
 };
 </script>
@@ -50,14 +55,21 @@ const calculateQuotes = async (payload: RequestQuote) => {
       </ul>
     </div>
 
-    <QuoteForm @submit="calculateQuotes" @error="(errors) => formErrors = errors" />
+    <!-- The form disappears during loading -->
+    <QuoteForm 
+      v-if="!isLoading"
+      ref="quoteFormRef"
+      @submit="calculateQuotes" 
+      @error="(errors) => formErrors = errors" 
+    />
 
     <div v-if="isLoading" class="loading-state">
       <div class="loading-spinner"></div>
       <p>Obteniendo resultados de nuestros proveedores...</p>
     </div>
 
-    <QuoteList v-else :quotes="quotes" :has-searched="hasSearched" />
+    <!-- Results show when not loading and search is performed -->
+    <QuoteList v-if="!isLoading && hasSearched" :quotes="quotes" :has-searched="hasSearched" />
   </div>
 </template>
 
@@ -127,6 +139,20 @@ const calculateQuotes = async (payload: RequestQuote) => {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+@media (max-width: 768px) {
+  .view-container {
+    padding: 1rem 0.5rem;
+    gap: 1rem;
+  }
+
+  .app-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .loading-state {
+    padding: 2rem 0;
   }
 }
 </style>
