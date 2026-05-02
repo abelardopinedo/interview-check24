@@ -7,9 +7,13 @@ nelmio_api_doc:
         components:
             securitySchemes:
                 Bearer:
-                    type: http
-                    scheme: bearer
-                    bearerFormat: JWT
+                    type: oauth2
+                    flows:
+                        password:
+                            tokenUrl: /login_check
+                            scopes: {}
+        security:
+            - Bearer: []
     areas:
         path_patterns:
             - ^/calculate
