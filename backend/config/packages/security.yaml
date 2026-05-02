@@ -26,6 +26,7 @@ security:
                 check_path: /login_check
                 username_parameter: username
                 password_parameter: password
+                form_only: true
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
