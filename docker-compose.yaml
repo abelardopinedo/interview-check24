@@ -1,0 +1,56 @@
+version: '3.8'
+name: interview-check24-prod
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    command: php -S 0.0.0.0:8000 -t public
+    environment:
+      APP_ENV: dev
+      APP_SECRET: 33b7fcb986f380565025fcdb8a274ffa3c0bfef3c1ae9cdfc2df27ecd4684685
+
+  provider-a:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    command: php -S 0.0.0.0:8001 -t public
+    environment:
+      APP_ENV: prod
+      APP_SECRET: 33b7fcb986f380565025fcdb8a274ffa3c0bfef3c1ae9cdfc2df27ecd4684685
+
+  provider-b:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    command: php -S 0.0.0.0:8002 -t public
+    environment:
+      APP_ENV: prod
+      APP_SECRET: 33b7fcb986f380565025fcdb8a274ffa3c0bfef3c1ae9cdfc2df27ecd4684685
+
+  provider-c:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    command: php -S 0.0.0.0:8003 -t public
+    environment:
+      APP_ENV: prod
+      APP_SECRET: 33b7fcb986f380565025fcdb8a274ffa3c0bfef3c1ae9cdfc2df27ecd4684685
