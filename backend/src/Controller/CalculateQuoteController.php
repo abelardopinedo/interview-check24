@@ -12,10 +12,11 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 
 use App\Service\ProviderSearchService;
-use Nelmio\ApiDocBundle\Annotation\Model;
+use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 
 
+#[OA\Tag(name: 'App')]
 final class CalculateQuoteController extends AbstractController
 {
     public function __construct(
@@ -26,6 +27,9 @@ final class CalculateQuoteController extends AbstractController
     #[OA\Post(
         summary: 'Calculate insurance quotes',
         description: 'Fetches and aggregates insurance quotes from multiple providers based on driver and car details.'
+    )]
+    #[OA\RequestBody(
+        content: new OA\JsonContent(ref: new Model(type: CalculateRequestDTO::class))
     )]
     #[OA\Response(
         response: 200,

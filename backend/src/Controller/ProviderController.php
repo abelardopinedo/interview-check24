@@ -16,6 +16,7 @@ use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 
 #[Route('/providers')]
+#[OA\Tag(name: 'Providers')]
 class ProviderController extends AbstractController
 {
     public function __construct(

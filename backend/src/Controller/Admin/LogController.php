@@ -12,6 +12,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Nelmio\ApiDocBundle\Attribute\Model;
 use OpenApi\Attributes as OA;
 
 #[Route('/admin/logs')]
@@ -33,6 +34,21 @@ class LogController extends AbstractController
             new OA\Parameter(name: 'status', in: 'query', schema: new OA\Schema(type: 'integer', nullable: true)),
             new OA\Parameter(name: 'sort', in: 'query', schema: new OA\Schema(type: 'string', enum: ['recent', 'latency']))
         ]
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns a paginated list of search logs.',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: new Model(type: LogSummaryDTO::class))),
+                new OA\Property(property: 'meta', properties: [
+                    new OA\Property(property: 'page', type: 'integer'),
+                    new OA\Property(property: 'limit', type: 'integer'),
+                    new OA\Property(property: 'total', type: 'integer'),
+                    new OA\Property(property: 'pages', type: 'integer'),
+                ], type: 'object')
+            ]
+        )
     )]
     public function index(Request $request): JsonResponse
     {
@@ -71,6 +87,12 @@ class LogController extends AbstractController
 
     #[Route('/{id}', methods: ['GET'])]
     #[OA\Get(summary: 'Get detailed log info with provider waterfall')]
+    #[OA\Response(
+        response: 200,
+        description: 'Returns detailed log information.',
+        content: new OA\JsonContent(ref: new Model(type: LogDetailDTO::class))
+    )]
+    #[OA\Response(response: 404, description: 'Log not found')]
     public function show(int $id): JsonResponse
     {
         $log = $this->requestLogRepository->find($id);

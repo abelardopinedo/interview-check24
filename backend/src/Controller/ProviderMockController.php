@@ -10,9 +10,17 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Serializer\Encoder\DecoderInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use OpenApi\Attributes as OA;
+use Nelmio\ApiDocBundle\Attribute\Model;
+use App\DTO\ProviderARequestDTO;
+use App\DTO\ProviderAResponseDTO;
+use App\DTO\ProviderBRequestDTO;
+use App\DTO\ProviderBResponseDTO;
+use App\DTO\ProviderCRequestDTO;
+use App\DTO\ProviderCResponseDTO;
 
 
 
+#[OA\Tag(name: 'Provider Mocks')]
 final class ProviderMockController extends AbstractController
 {
     private const CURRENCY = 'EUR';
@@ -49,16 +57,13 @@ final class ProviderMockController extends AbstractController
         description: 'Simulates Provider A pricing engine (JSON). Note: Includes artificial delay and 10% chance of 500 error.'
     )]
     #[OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: 'driver_age', type: 'integer', example: 30),
-                new OA\Property(property: 'car_form', type: 'string', example: 'suv'),
-                new OA\Property(property: 'car_use', type: 'string', example: 'private')
-            ]
-        )
+        content: new OA\JsonContent(ref: new Model(type: ProviderARequestDTO::class))
     )]
-    #[OA\Response(response: 200, description: 'Successful quote')]
+    #[OA\Response(
+        response: 200,
+        description: 'Successful quote',
+        content: new OA\JsonContent(ref: new Model(type: ProviderAResponseDTO::class))
+    )]
     public function providerAMock(Request $request): JsonResponse
     {
         //Emulating delay + Instability
@@ -109,15 +114,13 @@ final class ProviderMockController extends AbstractController
     )]
     #[OA\RequestBody(
         required: true,
-        content: new OA\MediaType(
-            mediaType: 'application/xml',
-            schema: new OA\Schema(
-                type: 'string',
-                example: "<SolicitudCotizacion><EdadConductor>30</EdadConductor><TipoCoche>turismo</TipoCoche><UsoCoche>privado</UsoCoche></SolicitudCotizacion>"
-            )
-        )
+        content: new OA\XmlContent(ref: new Model(type: ProviderBRequestDTO::class))
     )]
-    #[OA\Response(response: 200, description: 'Successful XML quote')]
+    #[OA\Response(
+        response: 200,
+        description: 'Successful XML quote',
+        content: new OA\XmlContent(ref: new Model(type: ProviderBResponseDTO::class))
+    )]
     public function providerBMock(Request $request, DecoderInterface $decoder, SerializerInterface $serializer): Response
     {
         //Emulating random delay
@@ -181,28 +184,13 @@ final class ProviderMockController extends AbstractController
         description: 'Simulates Provider C pricing engine (Nested JSON).'
     )]
     #[OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(
-                    property: 'driverInfo',
-                    properties: [
-                        new OA\Property(property: 'age', type: 'integer', example: 45)
-                    ],
-                    type: 'object'
-                ),
-                new OA\Property(
-                    property: 'carInfo',
-                    properties: [
-                        new OA\Property(property: 'car_form', type: 'string', example: 'suv'),
-                        new OA\Property(property: 'car_use', type: 'string', example: 'private')
-                    ],
-                    type: 'object'
-                )
-            ]
-        )
+        content: new OA\JsonContent(ref: new Model(type: ProviderCRequestDTO::class))
     )]
-    #[OA\Response(response: 200, description: 'Successful quote')]
+    #[OA\Response(
+        response: 200,
+        description: 'Successful quote',
+        content: new OA\JsonContent(ref: new Model(type: ProviderCResponseDTO::class))
+    )]
     public function providerCMock(Request $request): JsonResponse
     {
 
