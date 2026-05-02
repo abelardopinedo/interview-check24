@@ -32,10 +32,36 @@ watch(formState, (newState) => {
   sessionStorage.setItem('quoteFormState', JSON.stringify(newState));
 }, { deep: true });
 
+const calculateAge = (birthday: string): number => {
+  const birthDate = new Date(birthday);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 const nextStep = () => {
   const errors: string[] = [];
-  if (currentStep.value === 1 && !formState.driver_birthday) {
-    errors.push('La fecha de nacimiento es obligatoria.');
+  if (currentStep.value === 1) {
+    if (!formState.driver_birthday) {
+      errors.push('La fecha de nacimiento es obligatoria.');
+    } else {
+      const birthDate = new Date(formState.driver_birthday);
+      const today = new Date();
+      if (birthDate > today) {
+        errors.push('La fecha de nacimiento no puede estar en el futuro.');
+      } else {
+        const age = calculateAge(formState.driver_birthday);
+        if (age < 18) {
+          errors.push('Debes tener al menos 18 años para solicitar un seguro.');
+        } else if (age >= 123) {
+          errors.push('Por favor, introduce una edad válida (menor de 123 años).');
+        }
+      }
+    }
   } else if (currentStep.value === 2 && !formState.car_type) {
     errors.push('El tipo de coche es obligatorio.');
   }

@@ -53,15 +53,15 @@ class CalculateRequestDTO
     {
 
         if ($this->age < 0) {
-            $context->buildViolation('No puede ser en el futuro.')
+            $context->buildViolation('No puede estar en el futuro.')
                 ->atPath('Fecha de nacimiento')
                 ->addViolation();
         } else if ($this->age < 18) {
-            $context->buildViolation('El conductor debe tener al menos 18 años.')
+            $context->buildViolation('Debes tener al menos 18 años para solicitar un seguro.')
                 ->atPath('Fecha de nacimiento')
                 ->addViolation();
         } else if ($this->age > 123) {
-            $context->buildViolation('La edad del conductor es muy alta.')
+            $context->buildViolation('Por favor, introduce una edad válida (menor de 123 años).')
                 ->atPath('Fecha de nacimiento')
                 ->addViolation();
         }
