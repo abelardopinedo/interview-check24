@@ -15,25 +15,25 @@ class Provider
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $name = null;
+    private string $name;
 
     #[ORM\Column(length: 255)]
-    private ?string $url = null;
+    private string $url;
 
     #[ORM\Column(length: 255, unique: true)]
     #[SerializedName("internal_key")]
-    private ?string $internalKey = null;
+    private string $internalKey;
 
     #[ORM\Column]
     #[SerializedName("has_discount")]
-    private ?bool $hasDiscount = null;
+    private bool $hasDiscount = false;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->name;
     }
@@ -45,7 +45,7 @@ class Provider
         return $this;
     }
 
-    public function getUrl(): ?string
+    public function getUrl(): string
     {
         return $this->url;
     }
@@ -57,7 +57,7 @@ class Provider
         return $this;
     }
 
-    public function getInternalKey(): ?string
+    public function getInternalKey(): string
     {
         return $this->internalKey;
     }

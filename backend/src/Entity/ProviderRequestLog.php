@@ -16,11 +16,11 @@ class ProviderRequestLog
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
-    private ?RequestLog $request = null;
+    private RequestLog $request;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Provider $provider = null;
+    private Provider $provider;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $requestPayload = null;
@@ -32,19 +32,19 @@ class ProviderRequestLog
     private ?int $latency = null;
 
     #[ORM\Column(length: 20)]
-    private ?string $status = null;
+    private string $status;
 
     #[ORM\Column(nullable: true)]
     private ?int $httpCode = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $url = null;
+    private string $url;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $errorMessage = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private \DateTimeImmutable $createdAt;
 
     public function __construct()
     {

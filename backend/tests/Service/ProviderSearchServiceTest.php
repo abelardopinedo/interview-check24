@@ -7,21 +7,14 @@ use App\Entity\Provider;
 use App\Service\ProviderSearchService;
 use App\Service\Provider\ProviderInterface;
 use App\Entity\ProviderRequestLog;
+use App\Entity\RequestLog;
 use App\Service\CurrentRequestLogStore;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class ProviderSearchServiceTest extends TestCase
 {
-    private SerializerInterface $serializer;
-
-    protected function setUp(): void
-    {
-        $this->serializer = $this->createStub(SerializerInterface::class);
-    }
-
     private function createMockProvider(string $name, float $price, bool $hasDiscount, int $statusCode = 200)
     {
         $provider = $this->createStub(ProviderInterface::class);
@@ -39,7 +32,13 @@ class ProviderSearchServiceTest extends TestCase
             'currency' => 'EUR'
         ]);
 
-        $provider->method('getProviderEntity')->willReturn(new Provider());
+        $providerEntity = new Provider();
+        $providerEntity->setName($name);
+        $providerEntity->setUrl('http://test.local');
+        $providerEntity->setInternalKey('key_' . $name);
+        $providerEntity->setHasDiscount($hasDiscount);
+
+        $provider->method('getProviderEntity')->willReturn($providerEntity);
         $provider->method('applyDiscounts')->willReturnCallback(function ($quote) use ($hasDiscount) {
             if ($hasDiscount) {
                 $quote['discount_price'] = round($quote['price'] * 0.95, 2);
@@ -61,11 +60,11 @@ class ProviderSearchServiceTest extends TestCase
             ->with($this->isInstanceOf(ProviderRequestLog::class));
 
         $logStore = $this->createStub(CurrentRequestLogStore::class);
+        $logStore->method('getRequestLog')->willReturn($this->createStub(RequestLog::class));
 
         $service = new ProviderSearchService(
             [$providerA, $providerB],
             $entityManager,
-            $this->serializer,
             $logStore
         );
 
@@ -95,11 +94,11 @@ class ProviderSearchServiceTest extends TestCase
             ->with($this->isInstanceOf(ProviderRequestLog::class));
 
         $logStore = $this->createStub(CurrentRequestLogStore::class);
+        $logStore->method('getRequestLog')->willReturn($this->createStub(RequestLog::class));
 
         $service = new ProviderSearchService(
             [$providerA, $providerB],
             $entityManager,
-            $this->serializer,
             $logStore
         );
 
@@ -123,11 +122,11 @@ class ProviderSearchServiceTest extends TestCase
             ->with($this->isInstanceOf(ProviderRequestLog::class));
 
         $logStore = $this->createStub(CurrentRequestLogStore::class);
+        $logStore->method('getRequestLog')->willReturn($this->createStub(RequestLog::class));
 
         $service = new ProviderSearchService(
             [$providerA, $providerB],
             $entityManager,
-            $this->serializer,
             $logStore
         );
 
@@ -136,6 +135,5 @@ class ProviderSearchServiceTest extends TestCase
 
         // Should return empty array
         $this->assertCount(0, $results);
-        $this->assertIsArray($results);
     }
 }

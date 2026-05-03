@@ -7,7 +7,6 @@ use App\Entity\ProviderRequestLog;
 use App\Entity\RequestLog;
 use App\Service\Provider\ProviderInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Serializer\SerializerInterface;
 
 class ProviderSearchService
 {
@@ -17,7 +16,6 @@ class ProviderSearchService
     public function __construct(
         private iterable $providers,
         private EntityManagerInterface $entityManager,
-        private SerializerInterface $serializer,
         private CurrentRequestLogStore $logStore
     ) {
     }

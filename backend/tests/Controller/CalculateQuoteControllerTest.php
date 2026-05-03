@@ -6,10 +6,10 @@ use App\DTO\CalculateRequestDTO;
 use App\Service\ProviderSearchService;
 use App\Service\Provider\ProviderInterface;
 use App\Entity\ProviderRequestLog;
+use App\Entity\RequestLog;
 use App\Service\CurrentRequestLogStore;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
 class CalculateQuoteControllerTest extends WebTestCase
@@ -121,10 +121,10 @@ class CalculateQuoteControllerTest extends WebTestCase
             ->method('persist')
             ->with($this->isInstanceOf(ProviderRequestLog::class));
 
-        $serializer = $this->createStub(SerializerInterface::class);
         $logStore = $this->createStub(CurrentRequestLogStore::class);
+        $logStore->method('getRequestLog')->willReturn($this->createStub(RequestLog::class));
 
-        $service = new ProviderSearchService([$providerEnrolled, $providerNotEnrolled], $entityManager, $serializer, $logStore);
+        $service = new ProviderSearchService([$providerEnrolled, $providerNotEnrolled], $entityManager, $logStore);
         $dto = new CalculateRequestDTO('1990-01-01', 'Turismo', 'Privado');
 
         $results = $service->findAll($dto);
@@ -169,10 +169,10 @@ class CalculateQuoteControllerTest extends WebTestCase
             ->method('persist')
             ->with($this->isInstanceOf(ProviderRequestLog::class));
 
-        $serializer = $this->createStub(SerializerInterface::class);
         $logStore = $this->createStub(CurrentRequestLogStore::class);
+        $logStore->method('getRequestLog')->willReturn($this->createStub(RequestLog::class));
 
-        $service = new ProviderSearchService([$providerA, $providerB], $entityManager, $serializer, $logStore);
+        $service = new ProviderSearchService([$providerA, $providerB], $entityManager, $logStore);
         $dto = new CalculateRequestDTO('1990-01-01', 'Turismo', 'Privado');
 
         $results = $service->findAll($dto);
@@ -212,10 +212,10 @@ class CalculateQuoteControllerTest extends WebTestCase
             ->method('persist')
             ->with($this->isInstanceOf(ProviderRequestLog::class));
 
-        $serializer = $this->createStub(SerializerInterface::class);
         $logStore = $this->createStub(CurrentRequestLogStore::class);
+        $logStore->method('getRequestLog')->willReturn($this->createStub(RequestLog::class));
 
-        $service = new ProviderSearchService([$failingProvider, $successfulProvider], $entityManager, $serializer, $logStore);
+        $service = new ProviderSearchService([$failingProvider, $successfulProvider], $entityManager, $logStore);
         $dto = new CalculateRequestDTO('1990-01-01', 'Turismo', 'Privado');
 
         $results = $service->findAll($dto);

@@ -24,16 +24,16 @@ class RequestLog
     private ?int $latency = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $endpoint = null;
+    private string $endpoint;
 
     #[ORM\Column(length: 10)]
-    private ?string $httpMethod = null;
+    private string $httpMethod;
 
     #[ORM\Column(nullable: true)]
     private ?int $statusCode = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private \DateTimeImmutable $createdAt;
 
     public function __construct()
     {
