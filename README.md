@@ -42,6 +42,7 @@ Once the containers are running, you can access the different parts of the syste
 * Features:
   * Overview: Global performance of providers and recent activity. Click "details" on any log for deep-dive performance metrics.
   * Logs: Filter by status code, search by ID, or sort by latency to analyze system behavior.
+  * Providers: Modify the provider name, if it has discount, and the endpoint.
 
 3. API Documentation
 * URL: http://localhost:8000/api/doc
