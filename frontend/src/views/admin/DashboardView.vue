@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import type { LogSummary, PerformanceStats, LogDetail } from '@/types/admin';
 import { adminApi } from '../../api/admin';
-import PerformanceStats from '../../components/admin/PerformanceStats.vue';
+import PerformanceStatsComponent from '../../components/admin/PerformanceStats.vue';
 import LogTable from '../../components/admin/LogTable.vue';
 import LogWaterfall from '../../components/admin/LogWaterfall.vue';
 
-const logs = ref([]);
-const stats = ref([]);
-const selectedLog = ref<any>(null);
+const logs = ref<LogSummary[]>([]);
+const stats = ref<PerformanceStats | null>(null);
+const selectedLog = ref<LogDetail | null>(null);
 const isLoading = ref(true);
 
 const fetchData = async () => {
@@ -20,6 +21,7 @@ const fetchData = async () => {
     logs.value = logsData.data;
     stats.value = statsData;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error fetching dashboard data:', error);
   } finally {
     isLoading.value = false;
@@ -33,6 +35,7 @@ const selectLog = async (id: number) => {
       document.querySelector('.details-section')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error fetching log details:', error);
   }
 };
@@ -58,7 +61,7 @@ onMounted(fetchData);
         <div class="section-header">
           <h2>Rendimiento de Proveedores</h2>
         </div>
-        <PerformanceStats :stats="stats" />
+        <PerformanceStatsComponent v-if="stats" :stats="stats" />
       </section>
 
       <section class="logs-section">

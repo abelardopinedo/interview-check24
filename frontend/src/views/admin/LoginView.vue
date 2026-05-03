@@ -25,8 +25,9 @@ const handleSubmit = async () => {
     if (success) {
       router.push('/admin');
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     error.value = 'Usuario o contraseña incorrectos.';
+    // eslint-disable-next-line no-console
     console.error(err);
   } finally {
     isLoading.value = false;

@@ -26,9 +26,10 @@ export const useAuth = () => {
       const token = data.token;
       state.token = token;
       setCookie('jwt_token', token, 1);
-      
+
       return true;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Login failed:', error);
       throw error;
     }
@@ -40,6 +41,7 @@ export const useAuth = () => {
         await authApi.logout();
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.warn('Backend logout notification failed', error);
     } finally {
       state.token = null;

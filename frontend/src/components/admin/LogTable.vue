@@ -1,13 +1,8 @@
 <script setup lang="ts">
+import type { LogSummary } from '@/types/admin';
+
 defineProps<{
-  logs: Array<{
-    id: number;
-    endpoint: string;
-    httpMethod: string;
-    statusCode: number;
-    latency: number;
-    createdAt: string;
-  }>
+  logs: LogSummary[]
 }>();
 
 defineEmits(['select']);
@@ -16,7 +11,8 @@ const formatDate = (dateStr: string) => {
   return new Date(dateStr).toLocaleString();
 };
 
-const getStatusClass = (code: number) => {
+const getStatusClass = (code: number | null) => {
+  if (code === null) return 'status-warn';
   if (code >= 200 && code < 300) return 'status-ok';
   if (code >= 400 && code < 500) return 'status-warn';
   return 'status-error';

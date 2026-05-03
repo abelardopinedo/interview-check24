@@ -10,7 +10,12 @@ const quotes = ref<Quote[]>([]);
 const isLoading = ref(false);
 const hasSearched = ref(false);
 const formErrors = ref<string[]>([]);
-const quoteFormRef = ref<any>(null);
+const quoteFormRef = ref<InstanceType<typeof QuoteForm> | null>(null);
+
+interface Violation {
+  propertyPath: string;
+  title: string;
+}
 
 const calculateQuotes = async (payload: RequestQuote) => {
   isLoading.value = true;
@@ -20,11 +25,12 @@ const calculateQuotes = async (payload: RequestQuote) => {
 
   try {
     quotes.value = await insuranceApi.calculateQuotes(payload);
-  } catch (error: any) {
-    if (error.response && error.response.status === 422) {
-      const violations = error.response.data.violations;
+  } catch (error: unknown) {
+    const err = error as { response?: { status: number; data: { violations?: Violation[] } } };
+    if (err.response && err.response.status === 422) {
+      const violations = err.response.data.violations;
       if (violations && Array.isArray(violations)) {
-        formErrors.value = violations.map((v: any) => `${v.propertyPath}: ${v.title}`);
+        formErrors.value = violations.map((v) => `${v.propertyPath}: ${v.title}`);
       } else {
         formErrors.value = ['Ocurrio un error al obtener las cotizaciones.'];
       }

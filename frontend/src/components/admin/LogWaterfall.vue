@@ -1,38 +1,25 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import type { LogDetail } from '@/types/admin';
 
 const props = defineProps<{
-  log: {
-    id: number;
-    latency: number;
-    requestPayload: string;
-    responsePayload: string;
-    providerLogs: Array<{
-      providerName: string;
-      status: string;
-      latency: number;
-      httpCode: number;
-      requestPayload: string;
-      responsePayload: string;
-      url: string;
-    }>
-  }
+  log: LogDetail
 }>();
 
 const activePayload = ref<{ title: string; content: string } | null>(null);
 
 const maxLatency = computed(() => {
-  return Math.max(props.log.latency, ...props.log.providerLogs.map(p => p.latency));
+  return Math.max(props.log.latency ?? 0, ...props.log.providerLogs.map(p => p.latency ?? 0));
 });
 
-const formatPayload = (payload: string) => {
+const formatPayload = (payload: string | null) => {
   if (!payload) return 'Sin datos';
   
   // Try JSON
   try {
     const obj = JSON.parse(payload);
     return JSON.stringify(obj, null, 2);
-  } catch (e) {
+  } catch {
     // Check if XML
     if (payload.trim().startsWith('<')) {
       return formatXml(payload);
@@ -43,7 +30,7 @@ const formatPayload = (payload: string) => {
 
 const formatXml = (xml: string) => {
   let formatted = '';
-  let reg = /(>)(<)(\/*)/g;
+  const reg = /(>)(<)(\/*)/g;
   xml = xml.replace(reg, '$1\n$2$3');
   let pad = 0;
   xml.split('\n').forEach((node) => {
@@ -85,29 +72,29 @@ const openPayload = (title: string, content: string) => {
     
     <div class="timeline">
       <div class="timeline-header">
-        <span class="label">Total ({{ log.latency }}ms)</span>
+        <span class="label">Total ({{ log.latency ?? 0 }}ms)</span>
         <div class="full-bar-container">
-          <div class="bar total-bar" :style="{ width: (log.latency / maxLatency * 100) + '%' }"></div>
+          <div class="bar total-bar" :style="{ width: ((log.latency ?? 0) / maxLatency * 100) + '%' }"></div>
         </div>
       </div>
 
       <div v-for="pLog in log.providerLogs" :key="pLog.providerName" class="provider-row">
         <div class="provider-info">
           <span class="name">{{ pLog.providerName }}</span>
-          <span class="ms">{{ pLog.latency }}ms</span>
+          <span class="ms">{{ pLog.latency ?? 0 }}ms</span>
         </div>
         <div class="bar-container">
           <div 
             class="bar provider-bar" 
-            :style="{ width: (pLog.latency / maxLatency * 100) + '%' }"
+            :style="{ width: ((pLog.latency ?? 0) / maxLatency * 100) + '%' }"
             :class="pLog.status"
           ></div>
         </div>
         <div class="provider-actions">
-          <button class="btn-outline" @click="openPayload(pLog.providerName + ' - Request', pLog.requestPayload)">
+          <button class="btn-outline" @click="openPayload(pLog.providerName + ' - Request', pLog.requestPayload ?? '')">
             Request
           </button>
-          <button class="btn-outline" @click="openPayload(pLog.providerName + ' - Response', pLog.responsePayload)">
+          <button class="btn-outline" @click="openPayload(pLog.providerName + ' - Response', pLog.responsePayload ?? '')">
             Response
           </button>
         </div>

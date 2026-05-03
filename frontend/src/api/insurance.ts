@@ -1,6 +1,7 @@
-import apiClient from './client';
 import type { Quote } from '../types/Quote';
 import type { RequestQuote } from '../types/RequestQuote';
+import type { Provider, UpdateProvider } from '@/types/insurance';
+import apiClient from './client';
 
 export const insuranceApi = {
   calculateQuotes: async (payload: RequestQuote): Promise<Quote[]> => {
@@ -8,13 +9,13 @@ export const insuranceApi = {
     return response.data;
   },
 
-  getProviders: async () => {
-    const response = await apiClient.get('/api/providers');
+  getProviders: async (): Promise<Provider[]> => {
+    const response = await apiClient.get<Provider[]>('/api/providers');
     return response.data;
   },
 
-  updateProvider: async (id: number, data: any) => {
-    const response = await apiClient.patch(`/api/providers/${id}`, data);
+  updateProvider: async (id: number, data: UpdateProvider): Promise<Provider> => {
+    const response = await apiClient.patch<Provider>(`/api/providers/${id}`, data);
     return response.data;
   }
 };

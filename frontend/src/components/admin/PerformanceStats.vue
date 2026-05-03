@@ -1,11 +1,8 @@
 <script setup lang="ts">
+import type { PerformanceStats } from '@/types/admin';
+
 defineProps<{
-  stats: Array<{
-    providerName: string;
-    avgLatency: number;
-    errorCount: number;
-    totalCount: number;
-  }>
+  stats: PerformanceStats
 }>();
 </script>
 

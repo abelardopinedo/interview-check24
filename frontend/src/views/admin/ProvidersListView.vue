@@ -20,6 +20,7 @@ const fetchProviders = async () => {
   try {
     providers.value = await insuranceApi.getProviders();
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error fetching providers:', error);
   } finally {
     isLoading.value = false;
@@ -54,6 +55,7 @@ const saveProvider = async () => {
       message.value = { text: '', type: '' };
     }, 3000);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error saving provider:', error);
     message.value = { text: 'Error al actualizar el proveedor', type: 'error' };
   } finally {

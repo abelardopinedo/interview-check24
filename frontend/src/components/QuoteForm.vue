@@ -16,6 +16,7 @@ const getInitialState = (): RequestQuote => {
     try {
       return JSON.parse(stored);
     } catch (e) {
+      // eslint-disable-next-line no-console
       console.error('Failed to parse stored form state', e);
     }
   }

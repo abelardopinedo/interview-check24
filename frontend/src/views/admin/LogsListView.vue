@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
+import type { LogSummary, LogDetail, PaginatedResponse } from '@/types/admin';
 import { adminApi } from '../../api/admin';
 import LogTable from '../../components/admin/LogTable.vue';
 import LogWaterfall from '../../components/admin/LogWaterfall.vue';
 
-const logs = ref([]);
-const meta = ref({ page: 1, pages: 1, total: 0 });
-const selectedLog = ref<any>(null);
+const logs = ref<LogSummary[]>([]);
+const meta = ref<PaginatedResponse<LogSummary>['meta']>({ page: 1, pages: 1, total: 0, limit: 10 });
+const selectedLog = ref<LogDetail | null>(null);
 const isLoading = ref(true);
 
 // Filters
@@ -31,6 +32,7 @@ const fetchData = async () => {
     logs.value = data.data;
     meta.value = data.meta;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error fetching logs:', error);
   } finally {
     isLoading.value = false;
@@ -44,6 +46,7 @@ const selectLog = async (id: number) => {
       document.querySelector('.details-section')?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('Error fetching log details:', error);
   }
 };
@@ -57,7 +60,7 @@ const setPage = (p: number) => {
 };
 
 // Debounce search
-let searchTimeout: any;
+let searchTimeout: ReturnType<typeof setTimeout> | undefined;
 watch([searchQuery, statusFilter, sortBy, startDate, endDate], () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
